@@ -4,756 +4,601 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Naukri Auto-Applier Pro</title>
-    
-    <!-- Google Fonts -->
+    <meta name="description" content="Automated job application assistant for Naukri.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-color: #030712;
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --card-bg: rgba(255, 255, 255, 0.03);
-            --card-border: rgba(255, 255, 255, 0.08);
-            
-            --cyan: #38bdf8;
-            --purple: #a855f7;
-            --emerald: #10b981;
-            --red: #ef4444;
-            --amber: #f59e0b;
-            --blue: #3b82f6;
-            
-            --font-sans: 'Plus Jakarta Sans', sans-serif;
-            --font-mono: 'JetBrains Mono', monospace;
-        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+        :root {
+            --bg: #06080f;
+            --surface: rgba(255,255,255,0.04);
+            --surface-hover: rgba(255,255,255,0.07);
+            --border: rgba(255,255,255,0.08);
+            --border-hover: rgba(255,255,255,0.15);
+            --text: #e8eaed;
+            --text-dim: #8b92a5;
+            --text-muted: #5a6178;
+            --accent: #6366f1;
+            --accent-glow: rgba(99,102,241,0.3);
+            --green: #10b981;
+            --green-glow: rgba(16,185,129,0.25);
+            --red: #ef4444;
+            --red-glow: rgba(239,68,68,0.25);
+            --amber: #f59e0b;
+            --purple: #a855f7;
+            --cyan: #22d3ee;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --font: 'Inter', -apple-system, sans-serif;
+            --mono: 'JetBrains Mono', monospace;
         }
 
         body {
-            font-family: var(--font-sans);
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            line-height: 1.5;
-            overflow-x: hidden;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            overflow-x: hidden;
+            line-height: 1.6;
         }
 
-        /* Ambient Glows */
-        .ambient-glow {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(120px);
-            z-index: -1;
-            opacity: 0.15;
-            pointer-events: none;
+        /* ── Ambient background effects ─────────────────── */
+        .bg-effects {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            overflow: hidden;
         }
-        .glow-cyan { top: -10%; left: -5%; width: 40vw; height: 40vw; background: var(--cyan); }
-        .glow-purple { bottom: -10%; right: -5%; width: 45vw; height: 45vw; background: var(--purple); }
-        .glow-emerald { top: 40%; left: 30%; width: 30vw; height: 30vw; background: var(--emerald); }
-
-        /* Container */
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 0 24px;
-            width: 100%;
+        .bg-effects .orb {
+            position: absolute; border-radius: 50%; filter: blur(120px);
+            animation: float 20s ease-in-out infinite;
         }
-
-        /* Header */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 24px 0;
-            border-bottom: 1px solid var(--card-border);
-            margin-bottom: 40px;
+        .bg-effects .orb:nth-child(1) {
+            width: 600px; height: 600px; background: rgba(99,102,241,0.12);
+            top: -10%; left: -5%; animation-delay: 0s;
+        }
+        .bg-effects .orb:nth-child(2) {
+            width: 500px; height: 500px; background: rgba(168,85,247,0.08);
+            top: 40%; right: -10%; animation-delay: -7s;
+        }
+        .bg-effects .orb:nth-child(3) {
+            width: 400px; height: 400px; background: rgba(16,185,129,0.06);
+            bottom: -5%; left: 30%; animation-delay: -14s;
+        }
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.05); }
+            66% { transform: translate(-20px, 20px) scale(0.95); }
         }
 
-        .brand {
-            font-size: 1.25rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            letter-spacing: -0.02em;
-        }
+        /* ── Layout ─────────────────────────────────────── */
+        .app { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 24px 20px 60px; }
 
-        .nav-links {
-            display: flex;
-            gap: 24px;
-            align-items: center;
+        /* ── Header ─────────────────────────────────────── */
+        .header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 0; margin-bottom: 32px;
         }
-        
-        .nav-links a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: color 0.2s;
+        .header .brand {
+            display: flex; align-items: center; gap: 12px;
+            font-size: 20px; font-weight: 700; letter-spacing: -0.5px;
         }
-        .nav-links a:hover { color: var(--text-primary); }
-
+        .header .brand .logo {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; box-shadow: 0 4px 20px var(--accent-glow);
+        }
         .status-pill {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--card-border);
-            padding: 6px 14px;
-            border-radius: 999px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            transition: all 0.3s ease;
+            display: flex; align-items: center; gap: 8px;
+            padding: 6px 16px; border-radius: 20px;
+            background: var(--surface); border: 1px solid var(--border);
+            font-size: 12px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.5px; color: var(--text-dim);
         }
-        .status-pill.running {
-            color: var(--emerald);
-            border-color: rgba(16, 185, 129, 0.3);
-            background: rgba(16, 185, 129, 0.05);
-        }
-
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: var(--text-secondary);
+        .status-pill .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--text-muted);
         }
         .status-pill.running .dot {
-            background-color: var(--emerald);
-            box-shadow: 0 0 8px var(--emerald);
-            animation: pulse 2s infinite;
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green);
+            animation: pulse-dot 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.3); }
         }
 
-        @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
-
-        /* Hero */
+        /* ── Hero ───────────────────────────────────────── */
         .hero {
-            text-align: center;
-            margin-bottom: 48px;
+            text-align: center; padding: 48px 0 40px;
         }
         .hero h1 {
-            font-size: 2.75rem;
-            font-weight: 700;
-            letter-spacing: -0.03em;
-            margin-bottom: 12px;
-            background: linear-gradient(to right, #fff, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            font-size: 42px; font-weight: 900; letter-spacing: -1.5px;
+            line-height: 1.15;
+            background: linear-gradient(135deg, #fff 0%, var(--text-dim) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         .hero p {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-            max-width: 600px;
-            margin: 0 auto 32px;
+            margin-top: 12px; color: var(--text-dim); font-size: 16px;
+            max-width: 520px; margin-left: auto; margin-right: auto;
         }
         .hero-actions {
-            display: flex;
-            justify-content: center;
-            gap: 16px;
+            display: flex; gap: 14px; justify-content: center; margin-top: 28px;
         }
 
-        /* Buttons */
+        /* ── Buttons ────────────────────────────────────── */
         .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-family: var(--font-sans);
-            font-weight: 600;
-            font-size: 0.95rem;
-            cursor: pointer;
-            border: none;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            color: white;
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 12px 28px; border-radius: var(--radius-sm);
+            font-family: var(--font); font-size: 14px; font-weight: 600;
+            border: none; cursor: pointer; transition: all 0.2s ease;
             text-decoration: none;
         }
-        .btn:hover {
-            transform: translateY(-2px);
+        .btn:active { transform: scale(0.97); }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #818cf8);
+            color: #fff; box-shadow: 0 4px 24px var(--accent-glow);
         }
-        .btn:active {
-            transform: translateY(0);
-        }
+        .btn-primary:hover { box-shadow: 0 6px 32px var(--accent-glow); transform: translateY(-1px); }
+
         .btn-green {
-            background: linear-gradient(135deg, #10b981, #059669);
-            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+            background: linear-gradient(135deg, #059669, var(--green));
+            color: #fff; box-shadow: 0 4px 24px var(--green-glow);
         }
-        .btn-green:hover { box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); }
-        
+        .btn-green:hover { box-shadow: 0 6px 32px var(--green-glow); transform: translateY(-1px); }
+
         .btn-red {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+            background: linear-gradient(135deg, #dc2626, var(--red));
+            color: #fff; box-shadow: 0 4px 24px var(--red-glow);
         }
-        .btn-red:hover { box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4); }
+        .btn-red:hover { box-shadow: 0 6px 32px var(--red-glow); }
 
-        .btn-purple {
-            background: linear-gradient(135deg, #a855f7, #7e22ce);
-            box-shadow: 0 4px 14px rgba(168, 85, 247, 0.3);
-        }
-        .btn-blue {
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
-        }
         .btn-ghost {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--card-border);
-            color: var(--text-primary);
+            background: var(--surface); color: var(--text-dim);
+            border: 1px solid var(--border);
         }
-        .btn-ghost:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-        .btn-full { width: 100%; }
+        .btn-ghost:hover { background: var(--surface-hover); border-color: var(--border-hover); color: var(--text); }
 
-        /* Cards (Glassmorphism) */
+        .btn-google {
+            background: linear-gradient(135deg, #4285F4, #357ABD);
+            color: #fff; box-shadow: 0 4px 20px rgba(66,133,244,0.3);
+        }
+        .btn-google:hover { box-shadow: 0 6px 28px rgba(66,133,244,0.4); transform: translateY(-1px); }
+
+        .btn-email {
+            background: linear-gradient(135deg, var(--purple), #7c3aed);
+            color: #fff; box-shadow: 0 4px 20px rgba(168,85,247,0.3);
+        }
+        .btn-email:hover { box-shadow: 0 6px 28px rgba(168,85,247,0.4); transform: translateY(-1px); }
+
+        .btn-full { width: 100%; justify-content: center; }
+
+        /* ── Cards ──────────────────────────────────────── */
         .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--card-border);
-            border-radius: 20px;
-            padding: 32px;
-            margin-bottom: 24px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-        }
-        .card-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: white;
-        }
-        .card-desc {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            margin-bottom: 24px;
-        }
-
-        /* Forms */
-        .form-group {
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
             margin-bottom: 20px;
+            transition: border-color 0.3s ease;
         }
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        label {
-            display: block;
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: var(--text-secondary);
+        .card:hover { border-color: var(--border-hover); }
+        .card .step-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--accent);
             margin-bottom: 8px;
         }
-        input, select {
-            width: 100%;
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--card-border);
-            border-radius: 10px;
-            padding: 12px 16px;
-            color: white;
-            font-family: var(--font-sans);
-            font-size: 0.95rem;
-            transition: all 0.2s;
-            outline: none;
+        .card h2 {
+            font-size: 20px; font-weight: 700; letter-spacing: -0.3px;
+            margin-bottom: 6px;
         }
-        input:focus, select:focus {
-            border-color: var(--cyan);
-            background: rgba(0, 0, 0, 0.3);
-            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.1);
-        }
-        select option {
-            background: var(--bg-color);
-            color: white;
+        .card .subtitle {
+            color: var(--text-dim); font-size: 14px; margin-bottom: 20px;
         }
 
-        /* Dropzone */
+        /* ── Toast / inline message ──────────────────────── */
+        .toast {
+            padding: 12px 16px; border-radius: var(--radius-sm);
+            font-size: 13px; font-weight: 500; margin-top: 16px;
+            display: none; align-items: center; gap: 8px;
+            animation: slideIn 0.3s ease;
+        }
+        .toast.show { display: flex; }
+        .toast.success { background: rgba(16,185,129,0.12); color: var(--green); border: 1px solid rgba(16,185,129,0.2); }
+        .toast.info { background: rgba(99,102,241,0.12); color: #818cf8; border: 1px solid rgba(99,102,241,0.2); }
+        .toast.error { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+        .toast.warning { background: rgba(245,158,11,0.12); color: var(--amber); border: 1px solid rgba(245,158,11,0.2); }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ── Login buttons row ──────────────────────────── */
+        .login-row {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+        }
+
+        /* ── Form styles ────────────────────────────────── */
+        .form-group { margin-bottom: 18px; }
+        .form-label {
+            display: block; font-size: 13px; font-weight: 600;
+            color: var(--text-dim); margin-bottom: 6px;
+            letter-spacing: 0.3px;
+        }
+        .form-input, .form-select {
+            width: 100%; padding: 11px 14px; border-radius: var(--radius-sm);
+            background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+            color: var(--text); font-family: var(--font); font-size: 14px;
+            transition: all 0.2s ease; outline: none;
+        }
+        .form-input:focus, .form-select:focus {
+            border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .form-input::placeholder { color: var(--text-muted); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+        /* ── Resume dropzone ────────────────────────────── */
         .dropzone {
-            border: 2px dashed var(--card-border);
-            border-radius: 12px;
-            padding: 32px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            background: rgba(255, 255, 255, 0.01);
-            margin-bottom: 24px;
+            border: 2px dashed var(--border); border-radius: var(--radius-sm);
+            padding: 24px; text-align: center; cursor: pointer;
+            transition: all 0.3s ease; position: relative; overflow: hidden;
         }
-        .dropzone:hover {
-            border-color: var(--cyan);
-            background: rgba(56, 189, 248, 0.03);
-        }
-        .dropzone svg {
-            width: 32px;
-            height: 32px;
-            fill: var(--text-secondary);
-            margin-bottom: 12px;
-        }
-        .dropzone-text {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-        }
-        .dropzone-filename {
-            color: var(--emerald);
-            font-weight: 500;
-            margin-top: 8px;
-            display: none;
-        }
+        .dropzone:hover { border-color: var(--accent); background: rgba(99,102,241,0.05); }
+        .dropzone .icon { font-size: 32px; margin-bottom: 8px; }
+        .dropzone .label { color: var(--text-dim); font-size: 14px; }
+        .dropzone .filename { color: var(--green); font-weight: 600; font-size: 14px; margin-top: 4px; }
+        .dropzone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 
-        /* Dashboard Metrics */
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        @media (max-width: 600px) {
-            .metrics-grid { grid-template-columns: 1fr 1fr; }
-            .form-row { grid-template-columns: 1fr; }
-        }
+        /* ── Metrics row ────────────────────────────────── */
+        .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
         .metric {
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--card-border);
-            border-radius: 12px;
-            padding: 16px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 16px; text-align: center;
         }
-        .metric-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-secondary);
-            font-weight: 600;
-            margin-bottom: 4px;
+        .metric .value {
+            font-size: 32px; font-weight: 800; letter-spacing: -1px;
+            font-variant-numeric: tabular-nums;
         }
-        .metric-val {
-            font-size: 2rem;
-            font-weight: 700;
-            font-family: var(--font-mono);
-        }
-        .val-applied { color: var(--emerald); }
-        .val-dupes { color: var(--amber); }
-        .val-skipped { color: var(--purple); }
-        .val-failed { color: var(--red); }
+        .metric .label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-top: 2px; }
+        .metric.green .value { color: var(--green); }
+        .metric.amber .value { color: var(--amber); }
+        .metric.purple .value { color: var(--purple); }
+        .metric.red .value { color: var(--red); }
 
-        /* Terminal Console */
-        .console-box {
-            background: #000;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 16px;
-            height: 200px;
-            overflow-y: auto;
-            font-family: var(--font-mono);
-            font-size: 0.85rem;
-            color: #a3a3a3;
-            margin-bottom: 16px;
-            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+        /* ── Console ────────────────────────────────────── */
+        .console {
+            background: #0a0c14; border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 16px;
+            font-family: var(--mono); font-size: 12px;
+            line-height: 1.7; color: var(--text-dim);
+            max-height: 320px; overflow-y: auto;
+            scroll-behavior: smooth;
         }
-        .log-line { margin-bottom: 4px; border-bottom: 1px solid #111; padding-bottom: 2px; }
-        .log-time { color: #555; margin-right: 8px; }
-        .log-info { color: var(--cyan); }
-        .log-success { color: var(--emerald); }
-        .log-warn { color: var(--amber); }
-        .log-error { color: var(--red); }
-        
-        /* Custom Scrollbar for console */
-        .console-box::-webkit-scrollbar { width: 8px; }
-        .console-box::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
-        .console-box::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        .console::-webkit-scrollbar { width: 6px; }
+        .console::-webkit-scrollbar-track { background: transparent; }
+        .console::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .console .line { padding: 1px 0; }
 
-        /* Footer */
-        footer {
-            margin-top: auto;
-            padding: 32px 0;
-            text-align: center;
-            border-top: 1px solid var(--card-border);
-            color: var(--text-secondary);
-            font-size: 0.9rem;
+        /* ── Footer ─────────────────────────────────────── */
+        .footer {
+            text-align: center; padding: 32px 0 16px; color: var(--text-muted);
+            font-size: 13px; border-top: 1px solid var(--border); margin-top: 32px;
         }
-        footer a { color: var(--cyan); text-decoration: none; }
-        footer a:hover { text-decoration: underline; }
+        .footer a { color: var(--accent); text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
 
-        /* Inline Messages */
-        .inline-msg {
-            display: none;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            margin-top: 16px;
-            animation: fadeIn 0.3s ease;
-        }
-        .msg-success { background: rgba(16, 185, 129, 0.1); color: var(--emerald); border: 1px solid rgba(16, 185, 129, 0.2); }
-        .msg-error { background: rgba(239, 68, 68, 0.1); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.2); }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-5px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* ── Responsive ─────────────────────────────────── */
+        @media (max-width: 640px) {
+            .hero h1 { font-size: 28px; }
+            .login-row, .form-row, .metrics { grid-template-columns: 1fr 1fr; }
+            .hero-actions { flex-direction: column; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Ambient Background -->
-    <div class="ambient-glow glow-cyan"></div>
-    <div class="ambient-glow glow-purple"></div>
-    <div class="ambient-glow glow-emerald"></div>
+<div class="bg-effects">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+</div>
 
-    <div class="container">
-        
-        <!-- Header -->
-        <header>
-            <div class="brand">🚀 Naukri Auto-Applier Pro</div>
-            <nav class="nav-links">
-                <a href="#dashboard">Dashboard</a>
-                <a href="#help">Help</a>
-                <div id="status-pill" class="status-pill">
-                    <div class="dot"></div>
-                    <span id="status-text">IDLE</span>
-                </div>
-            </nav>
-        </header>
+<div class="app">
 
-        <main>
-            <!-- Hero -->
-            <section class="hero">
-                <h1>Your Personal Job Application Assistant</h1>
-                <p>Automate your Naukri.com job hunt. Set your preferences, upload your resume, and let the bot apply to the perfect matches for you while you sleep.</p>
-                <div class="hero-actions">
-                    <button class="btn btn-green" onclick="startBot()">🚀 Start Applying</button>
-                    <button class="btn btn-red" onclick="stopBot()">⏸ Stop</button>
-                </div>
-                <div id="hero-msg" class="inline-msg"></div>
-            </section>
+    <!-- ── Header ──────────────────────────────── -->
+    <header class="header">
+        <div class="brand">
+            <div class="logo">🚀</div>
+            <span>Naukri Auto-Applier</span>
+        </div>
+        <div id="statusPill" class="status-pill">
+            <div class="dot"></div>
+            <span id="statusText">IDLE</span>
+        </div>
+    </header>
 
-            <!-- Step 1 -->
-            <section class="card">
-                <h2 class="card-title">Step 1: Login to Naukri</h2>
-                <p class="card-desc">First, login to your Naukri account. Choose one method below:</p>
-                
-                <div class="form-row">
-                    <button class="btn btn-purple btn-full" onclick="googleLogin()">🌐 Login with Google</button>
-                    <button class="btn btn-blue btn-full" onclick="manualLogin()">📧 Login with Email</button>
-                </div>
-                <div id="login-msg" class="inline-msg msg-success"></div>
-            </section>
+    <!-- ── Hero ────────────────────────────────── -->
+    <section class="hero">
+        <h1>Your Personal Job<br>Application Assistant</h1>
+        <p>Set your preferences, login to Naukri, and let the bot apply to matching jobs automatically while you focus on what matters.</p>
+        <div class="hero-actions">
+            <button class="btn btn-green" onclick="startBot()">🚀 Start Applying</button>
+            <button class="btn btn-red" onclick="stopBot()">⏸ Stop</button>
+        </div>
+    </section>
 
-            <!-- Step 2 -->
-            <section class="card">
-                <h2 class="card-title">Step 2: Your Profile Details</h2>
-                <p class="card-desc">Configure what kind of jobs the bot should target.</p>
-                
-                <div class="form-group">
-                    <label>Job Keywords (comma-separated)</label>
-                    <input type="text" id="keywords" value="Operation Management, Finance, AML">
-                </div>
-                
-                <div class="form-group">
-                    <label>Preferred Locations (comma-separated)</label>
-                    <input type="text" id="locations" value="Bangalore, Gurugram, Gurgaon, Delhi NCR, Noida, Hyderabad, Pune">
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Work Experience (Years)</label>
-                        <input type="number" id="experience" value="4" min="0" step="0.5">
-                    </div>
-                    <div class="form-group">
-                        <label>Notice Period</label>
-                        <select id="notice-period">
-                            <option value="15 Days or less" selected>15 Days or less</option>
-                            <option value="Immediate">Immediate</option>
-                            <option value="30 Days">30 Days</option>
-                            <option value="60 Days">60 Days</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Current CTC (LPA)</label>
-                        <input type="number" id="current-ctc" value="4.0" step="0.1">
-                    </div>
-                    <div class="form-group">
-                        <label>Expected CTC (LPA)</label>
-                        <input type="number" id="expected-ctc" value="6.5" step="0.1">
-                    </div>
-                </div>
-
-                <div class="dropzone" onclick="document.getElementById('resume-upload').click()">
-                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg>
-                    <div class="dropzone-text">Click to attach your Resume PDF</div>
-                    <div id="dropzone-filename" class="dropzone-filename"></div>
-                    <input type="file" id="resume-upload" style="display: none" accept=".pdf,.doc,.docx" onchange="uploadResumeFile(this)">
-                </div>
-
-                <button class="btn btn-blue btn-full" onclick="saveConfig()">💾 Save Settings</button>
-                <div id="config-msg" class="inline-msg"></div>
-            </section>
-
-            <!-- Step 3 -->
-            <section class="card" id="dashboard">
-                <h2 class="card-title">Step 3: Live Dashboard</h2>
-                <p class="card-desc">Monitor the bot's application progress in real-time.</p>
-                
-                <div class="metrics-grid">
-                    <div class="metric">
-                        <div class="metric-label">Applied</div>
-                        <div class="metric-val val-applied" id="metric-applied">0</div>
-                    </div>
-                    <div class="metric">
-                        <div class="metric-label">Duplicates</div>
-                        <div class="metric-val val-dupes" id="metric-dupes">0</div>
-                    </div>
-                    <div class="metric">
-                        <div class="metric-label">Ext. Skipped</div>
-                        <div class="metric-val val-skipped" id="metric-skipped">0</div>
-                    </div>
-                    <div class="metric">
-                        <div class="metric-label">Failed</div>
-                        <div class="metric-val val-failed" id="metric-failed">0</div>
-                    </div>
-                </div>
-
-                <div class="console-box" id="console">
-                    <div class="log-line"><span class="log-time">[System]</span><span class="log-info">Dashboard initialized. Waiting for engine start...</span></div>
-                </div>
-                
-                <button class="btn btn-ghost" onclick="viewReport()">View Full Report ↗</button>
-            </section>
-        </main>
-
-        <!-- Footer -->
-        <footer>
-            <p>&copy; 2026 Naukri Auto-Applier Pro. <a href="https://github.com/Vansh9115/naukri-auto-applier-pro" target="_blank">View on GitHub</a></p>
-        </footer>
+    <!-- ── Step 1: Login ──────────────────────── -->
+    <div class="card">
+        <div class="step-badge">● Step 1</div>
+        <h2>Login to Naukri</h2>
+        <p class="subtitle">Choose a login method. A Chrome window will open — sign in and then <strong>close Chrome</strong> to save your session.</p>
+        <div class="login-row">
+            <button class="btn btn-google btn-full" onclick="googleLogin()">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.49h4.84a4.14 4.14 0 01-1.8 2.71v2.26h2.92a8.78 8.78 0 002.68-6.62z" fill="#4285F4"/><path d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.83.86-3.04.86-2.34 0-4.33-1.58-5.04-3.71H.96v2.33A9 9 0 009 18z" fill="#34A853"/><path d="M3.96 10.71A5.41 5.41 0 013.68 9c0-.59.1-1.17.28-1.71V4.96H.96A9 9 0 000 9c0 1.45.35 2.82.96 4.04l3-2.33z" fill="#FBBC05"/><path d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.59C13.46.89 11.43 0 9 0A9 9 0 00.96 4.96l3 2.33C4.67 5.16 6.66 3.58 9 3.58z" fill="#EA4335"/></svg>
+                Login with Google
+            </button>
+            <button class="btn btn-email btn-full" onclick="manualLogin()">📧 Login with Email</button>
+        </div>
+        <div id="loginToast" class="toast info">
+            <span id="loginToastText">Chrome is opening...</span>
+        </div>
     </div>
 
-    <!-- JavaScript Logic -->
-    <script>
-        let isRunning = false;
+    <!-- ── Step 2: Profile ────────────────────── -->
+    <div class="card">
+        <div class="step-badge">● Step 2</div>
+        <h2>Your Profile Details</h2>
+        <p class="subtitle">Configure what jobs to target. The bot auto-fills all application questions from these details.</p>
 
-        // Helper to show inline messages safely without alerts
-        function showMessage(elementId, text, type = 'success', duration = 3000) {
-            const el = document.getElementById(elementId);
-            el.textContent = text;
-            el.className = `inline-msg msg-${type}`;
-            el.style.display = 'block';
-            
-            if (duration > 0) {
-                setTimeout(() => {
-                    el.style.display = 'none';
-                }, duration);
-            }
+        <div class="form-group">
+            <label class="form-label">Job Keywords (comma-separated)</label>
+            <input id="keywords" class="form-input" placeholder="e.g. Network Engineer, Operations, Finance">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Preferred Locations (comma-separated)</label>
+            <input id="locations" class="form-input" placeholder="e.g. Bangalore, Delhi NCR, Hyderabad">
+        </div>
+
+        <div class="form-row form-group">
+            <div>
+                <label class="form-label">Experience (Years)</label>
+                <input id="experience" type="number" class="form-input" value="4" min="0" max="40">
+            </div>
+            <div>
+                <label class="form-label">Notice Period</label>
+                <select id="notice" class="form-select">
+                    <option value="15">15 Days or less</option>
+                    <option value="0">Immediate</option>
+                    <option value="30">30 Days</option>
+                    <option value="60">60 Days</option>
+                    <option value="90">90 Days</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row form-group">
+            <div>
+                <label class="form-label">Current CTC (LPA)</label>
+                <input id="currCtc" type="number" step="0.1" class="form-input" value="4.0">
+            </div>
+            <div>
+                <label class="form-label">Expected CTC (LPA)</label>
+                <input id="expCtc" type="number" step="0.1" class="form-input" value="6.5">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Resume</label>
+            <div class="dropzone" id="dropzone">
+                <div class="icon">📄</div>
+                <div class="label">Click to attach your Resume (PDF/DOC)</div>
+                <div class="filename" id="resumeName"></div>
+                <input type="file" id="resumeFile" accept=".pdf,.doc,.docx" onchange="uploadResume(this)">
+            </div>
+        </div>
+
+        <button class="btn btn-primary btn-full" onclick="saveConfig()">💾 Save Settings</button>
+        <div id="configToast" class="toast success"><span id="configToastText"></span></div>
+    </div>
+
+    <!-- ── Step 3: Dashboard ──────────────────── -->
+    <div class="card">
+        <div class="step-badge">● Step 3</div>
+        <h2>Live Dashboard</h2>
+        <p class="subtitle">Real-time progress of your application session.</p>
+
+        <div class="metrics">
+            <div class="metric green">
+                <div class="value" id="metricApplied">0</div>
+                <div class="label">Applied</div>
+            </div>
+            <div class="metric amber">
+                <div class="value" id="metricSkipped">0</div>
+                <div class="label">Duplicates</div>
+            </div>
+            <div class="metric purple">
+                <div class="value" id="metricExternal">0</div>
+                <div class="label">External</div>
+            </div>
+            <div class="metric red">
+                <div class="value" id="metricFailed">0</div>
+                <div class="label">Failed</div>
+            </div>
+        </div>
+
+        <div class="console" id="console">
+            <div class="line" style="color: var(--text-muted);">Waiting to start...</div>
+        </div>
+
+        <div style="margin-top: 14px; text-align: right;">
+            <button class="btn btn-ghost" onclick="window.open('/api/report','_blank')">📊 View Full Report</button>
+        </div>
+    </div>
+
+    <!-- ── Footer ─────────────────────────────── -->
+    <footer class="footer">
+        <p>Naukri Auto-Applier Pro &copy; 2026 &middot; <a href="https://github.com/Vansh9115/naukri-auto-applier-pro" target="_blank">GitHub</a></p>
+    </footer>
+
+</div>
+
+<script>
+    // ── State ──
+    let isRunning = false;
+
+    // ── Toast helper ──
+    function showToast(id, msg, type = 'success') {
+        const el = document.getElementById(id);
+        const txt = document.getElementById(id + 'Text');
+        el.className = 'toast ' + type + ' show';
+        txt.textContent = msg;
+        if (type === 'success' || type === 'info') {
+            setTimeout(() => { el.classList.remove('show'); }, 5000);
         }
+    }
 
-        // Add a line to the visual console
-        function appendLog(message, level = 'info') {
-            const consoleBox = document.getElementById('console');
-            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
-            const line = document.createElement('div');
-            line.className = 'log-line';
-            line.innerHTML = `<span class="log-time">[${time}]</span><span class="log-${level}">${message}</span>`;
-            consoleBox.appendChild(line);
-            consoleBox.scrollTop = consoleBox.scrollHeight;
+    // ── Load config ──
+    async function loadConfig() {
+        try {
+            const r = await fetch('/api/config');
+            const cfg = await r.json();
+            if (cfg.keywords) document.getElementById('keywords').value = (cfg.keywords || []).join(', ');
+            if (cfg.locations) document.getElementById('locations').value = (cfg.locations || []).join(', ');
+            if (cfg.experience_years != null) document.getElementById('experience').value = cfg.experience_years;
+            if (cfg.notice_period_days != null) document.getElementById('notice').value = cfg.notice_period_days;
+            if (cfg.current_ctc_lpa != null) document.getElementById('currCtc').value = cfg.current_ctc_lpa;
+            if (cfg.expected_ctc_lpa != null) document.getElementById('expCtc').value = cfg.expected_ctc_lpa;
+            if (cfg.resume_path) {
+                const name = cfg.resume_path.split(/[\\/]/).pop();
+                document.getElementById('resumeName').textContent = '✅ ' + name;
+            }
+        } catch(e) {}
+    }
+
+    // ── Save config ──
+    async function saveConfig() {
+        const kw = document.getElementById('keywords').value.split(',').map(s => s.trim()).filter(Boolean);
+        const loc = document.getElementById('locations').value.split(',').map(s => s.trim()).filter(Boolean);
+        const body = {
+            keywords: kw,
+            locations: loc,
+            experience_years: parseInt(document.getElementById('experience').value) || 4,
+            notice_period_days: parseInt(document.getElementById('notice').value) || 15,
+            current_ctc_lpa: parseFloat(document.getElementById('currCtc').value) || 4.0,
+            expected_ctc_lpa: parseFloat(document.getElementById('expCtc').value) || 6.5,
+            max_applications_per_run: 50,
+        };
+        try {
+            await fetch('/api/config', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+            showToast('configToast', '✅ Settings saved!', 'success');
+        } catch(e) {
+            showToast('configToast', '❌ Failed to save.', 'error');
         }
+    }
 
-        // On Load: Fetch config and status
-        window.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const configRes = await fetch('/api/config');
-                if (configRes.ok) {
-                    const data = await configRes.json();
-                    if(data.keywords) document.getElementById('keywords').value = data.keywords;
-                    if(data.locations) document.getElementById('locations').value = data.locations;
-                    if(data.experience) document.getElementById('experience').value = data.experience;
-                    if(data.noticePeriod) document.getElementById('notice-period').value = data.noticePeriod;
-                    if(data.currentCTC) document.getElementById('current-ctc').value = data.currentCTC;
-                    if(data.expectedCTC) document.getElementById('expected-ctc').value = data.expectedCTC;
-                }
-            } catch (err) {
-                console.log("Config fetch failed (expected if backend offline)");
-            }
-            
-            fetchStatus();
-            // Poll status every 2 seconds
-            setInterval(fetchStatus, 2000);
-        });
-
-        // Fetch Live Status
-        async function fetchStatus() {
-            try {
-                const res = await fetch('/api/status');
-                if (res.ok) {
-                    const data = await res.json();
-                    updateDashboard(data);
-                }
-            } catch (err) {
-                // Silent fail for demo if backend is offline
-            }
-        }
-
-        function updateDashboard(data) {
-            // Update metrics
-            if (data.metrics) {
-                document.getElementById('metric-applied').textContent = data.metrics.applied || 0;
-                document.getElementById('metric-dupes').textContent = data.metrics.duplicates || 0;
-                document.getElementById('metric-skipped').textContent = data.metrics.skipped || 0;
-                document.getElementById('metric-failed').textContent = data.metrics.failed || 0;
-            }
-            
-            // Update console logs
-            if (data.logs && Array.isArray(data.logs)) {
-                const consoleBox = document.getElementById('console');
-                consoleBox.innerHTML = '';
-                data.logs.forEach(log => appendLog(log.msg, log.level));
-            }
-            
-            // Update Status Pill
-            const pill = document.getElementById('status-pill');
-            const text = document.getElementById('status-text');
-            if (data.isRunning) {
-                isRunning = true;
-                pill.classList.add('running');
-                text.textContent = 'RUNNING';
+    // ── Start bot ──
+    async function startBot() {
+        await saveConfig();
+        try {
+            const r = await fetch('/api/start', { method: 'POST' });
+            const d = await r.json();
+            if (d.status === 'already_running') {
+                showToast('configToast', '⚠️ Already running!', 'warning');
             } else {
-                isRunning = false;
+                showToast('configToast', '🚀 Engine started! Chrome will open shortly.', 'success');
+            }
+        } catch(e) {
+            showToast('configToast', '❌ Could not start.', 'error');
+        }
+    }
+
+    // ── Stop bot ──
+    async function stopBot() {
+        try {
+            await fetch('/api/stop', { method: 'POST' });
+            showToast('configToast', '⏸ Stop requested.', 'warning');
+        } catch(e) {}
+    }
+
+    // ── Google login ──
+    async function googleLogin() {
+        showToast('loginToast', '🌐 Launching Chrome... Sign in with Google, then close Chrome.', 'info');
+        try {
+            await fetch('/api/google-login', { method: 'POST' });
+        } catch(e) {
+            showToast('loginToast', '❌ Could not open Chrome. Is Chrome installed?', 'error');
+        }
+    }
+
+    // ── Manual login ──
+    async function manualLogin() {
+        showToast('loginToast', '💻 Launching Chrome... Log in with email, then close Chrome.', 'info');
+        try {
+            await fetch('/api/manual-login', { method: 'POST' });
+        } catch(e) {
+            showToast('loginToast', '❌ Could not open Chrome.', 'error');
+        }
+    }
+
+    // ── Upload resume ──
+    async function uploadResume(input) {
+        if (!input.files.length) return;
+        const fd = new FormData();
+        fd.append('resume', input.files[0]);
+        try {
+            const r = await fetch('/api/upload-resume', { method: 'POST', body: fd });
+            const d = await r.json();
+            if (d.status === 'success') {
+                document.getElementById('resumeName').textContent = '✅ ' + input.files[0].name;
+            }
+        } catch(e) {}
+    }
+
+    // ── Status polling ──
+    async function pollStatus() {
+        try {
+            const r = await fetch('/api/status');
+            const d = await r.json();
+
+            isRunning = d.running;
+            const pill = document.getElementById('statusPill');
+            const txt = document.getElementById('statusText');
+            if (isRunning) {
+                pill.classList.add('running');
+                txt.textContent = 'RUNNING';
+            } else {
                 pill.classList.remove('running');
-                text.textContent = 'IDLE';
+                txt.textContent = 'IDLE';
             }
-        }
 
-        // Login Methods
-        async function googleLogin() {
-            showMessage('login-msg', 'Initiating Google Login...', 'success', 0);
-            try {
-                const res = await fetch('/api/google-login', { method: 'POST' });
-                if(res.ok) showMessage('login-msg', 'Successfully authenticated via Google!', 'success');
-                else showMessage('login-msg', 'Google login failed.', 'error');
-            } catch (err) {
-                showMessage('login-msg', 'Login request simulated (backend offline)', 'success');
+            document.getElementById('metricApplied').textContent = d.applied || 0;
+            document.getElementById('metricSkipped').textContent = d.skipped || 0;
+            document.getElementById('metricExternal').textContent = d.external || 0;
+            document.getElementById('metricFailed').textContent = d.failed || 0;
+
+            if (d.logs && d.logs.length) {
+                const con = document.getElementById('console');
+                con.innerHTML = d.logs.map(l => '<div class="line">' + escHtml(l) + '</div>').join('');
+                con.scrollTop = con.scrollHeight;
             }
-        }
+        } catch(e) {}
+    }
 
-        async function manualLogin() {
-            showMessage('login-msg', 'Initiating Email Login...', 'success', 0);
-            try {
-                const res = await fetch('/api/manual-login', { method: 'POST' });
-                if(res.ok) showMessage('login-msg', 'Successfully authenticated via Email!', 'success');
-                else showMessage('login-msg', 'Email login failed.', 'error');
-            } catch (err) {
-                showMessage('login-msg', 'Login request simulated (backend offline)', 'success');
-            }
-        }
+    function escHtml(s) {
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
 
-        // File Upload
-        async function uploadResumeFile(input) {
-            if (!input.files || input.files.length === 0) return;
-            const file = input.files[0];
-            
-            const filenameDiv = document.getElementById('dropzone-filename');
-            filenameDiv.textContent = `Attached: ${file.name}`;
-            filenameDiv.style.display = 'block';
-
-            const formData = new FormData();
-            formData.append('resume', file);
-
-            try {
-                const res = await fetch('/api/upload-resume', {
-                    method: 'POST',
-                    body: formData
-                });
-                if(res.ok) showMessage('config-msg', 'Resume uploaded successfully!', 'success');
-            } catch (err) {
-                showMessage('config-msg', 'Resume staged for upload.', 'success');
-            }
-        }
-
-        // Save Configuration
-        async function saveConfig() {
-            const config = {
-                keywords: document.getElementById('keywords').value.split(',').map(s => s.trim()),
-                locations: document.getElementById('locations').value.split(',').map(s => s.trim()),
-                experience: parseFloat(document.getElementById('experience').value),
-                noticePeriod: document.getElementById('notice-period').value,
-                currentCTC: parseFloat(document.getElementById('current-ctc').value),
-                expectedCTC: parseFloat(document.getElementById('expected-ctc').value)
-            };
-
-            try {
-                const res = await fetch('/api/config', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(config)
-                });
-                if (res.ok) {
-                    showMessage('config-msg', 'Settings saved!', 'success');
-                } else {
-                    showMessage('config-msg', 'Failed to save settings.', 'error');
-                }
-            } catch (err) {
-                showMessage('config-msg', 'Settings saved locally.', 'success');
-            }
-            return config;
-        }
-
-        // Bot Controls
-        async function startBot() {
-            await saveConfig();
-            
-            try {
-                const res = await fetch('/api/start', { method: 'POST' });
-                if(res.ok) {
-                    showMessage('hero-msg', 'Application engine started!', 'success');
-                    appendLog('Engine initialized by user.', 'success');
-                } else {
-                    showMessage('hero-msg', 'Failed to start engine.', 'error');
-                }
-            } catch (err) {
-                showMessage('hero-msg', 'Application engine started (simulated)!', 'success');
-                appendLog('Engine initialized (simulated).', 'success');
-                
-                // Simulate running UI state if backend offline
-                isRunning = true;
-                document.getElementById('status-pill').classList.add('running');
-                document.getElementById('status-text').textContent = 'RUNNING';
-            }
-        }
-
-        async function stopBot() {
-            try {
-                const res = await fetch('/api/stop', { method: 'POST' });
-                if(res.ok) {
-                    showMessage('hero-msg', 'Engine stopped.', 'success');
-                    appendLog('Engine stopped by user.', 'warn');
-                } else {
-                    showMessage('hero-msg', 'Failed to stop engine.', 'error');
-                }
-            } catch (err) {
-                showMessage('hero-msg', 'Engine stopped (simulated).', 'success');
-                appendLog('Engine stopped by user.', 'warn');
-                
-                // Simulate stopped UI state
-                isRunning = false;
-                document.getElementById('status-pill').classList.remove('running');
-                document.getElementById('status-text').textContent = 'IDLE';
-            }
-        }
-
-        // View Report
-        function viewReport() {
-            window.open('/api/report', '_blank');
-        }
-    </script>
+    // ── Init ──
+    loadConfig();
+    pollStatus();
+    setInterval(pollStatus, 2000);
+</script>
 </body>
 </html>
