@@ -4,14 +4,17 @@ import json
 import threading
 import webbrowser
 from flask import Flask, jsonify, request, send_file, render_template_string
+from werkzeug.utils import secure_filename
 from naukri_bot import NaukriBot, load_config
 from tracker import JobTracker
 
 app = Flask(__name__, static_folder=".")
+app.config['UPLOAD_FOLDER'] = os.path.abspath("./uploads")
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 bot_instance = None
 bot_thread = None
-log_buffer = ["ℹ️ Web Application initialized."]
+log_buffer = ["ℹ️ Enterprise Web Application initialized."]
 
 def append_log(msg, level="INFO"):
     icon_map = {"INFO": "ℹ️", "SUCCESS": "✅", "WARNING": "⚠️", "ERROR": "❌"}
@@ -37,6 +40,26 @@ def handle_config():
     else:
         return jsonify(load_config())
 
+@app.route("/api/upload-resume", methods=["POST"])
+def upload_resume():
+    if 'resume' not in request.files:
+        return jsonify({"status": "error", "message": "No file uploaded"}), 400
+    file = request.files['resume']
+    if file.filename == '':
+        return jsonify({"status": "error", "message": "No file selected"}), 400
+    if file:
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        
+        cfg = load_config()
+        cfg["resume_path"] = os.path.abspath(file_path)
+        with open("config.json", "w", encoding="utf-8") as f:
+            json.dump(cfg, f, indent=2)
+            
+        append_log(f"📁 Resume uploaded successfully: {filename}", "SUCCESS")
+        return jsonify({"status": "success", "resume_path": os.path.abspath(file_path)})
+
 @app.route("/api/start", methods=["POST"])
 def start_bot():
     global bot_instance, bot_thread, log_buffer
@@ -44,7 +67,7 @@ def start_bot():
         return jsonify({"status": "already_running"})
 
     cfg = load_config()
-    log_buffer = ["🚀 Starting new application session (counters reset to 0)..."]
+    log_buffer = ["🚀 Starting new application session (session counters reset to 0)..."]
     bot_instance = NaukriBot(cfg, log_callback=append_log)
 
     def _worker():
@@ -55,7 +78,7 @@ def start_bot():
 
     bot_thread = threading.Thread(target=_worker, daemon=True)
     bot_thread.start()
-    append_log("🚀 Background auto-application thread started.", "SUCCESS")
+    append_log("🚀 Background auto-application engine started.", "SUCCESS")
     return jsonify({"status": "started"})
 
 @app.route("/api/stop", methods=["POST"])
@@ -74,8 +97,18 @@ def google_login():
         bot = NaukriBot(cfg, log_callback=append_log)
         bot.ensure_google_login()
     threading.Thread(target=_worker, daemon=True).start()
-    append_log("Opening Chrome window for Google Authentication...", "INFO")
+    append_log("Opening Chrome window for Google Sign-in to Naukri...", "INFO")
     return jsonify({"status": "opening_google_login"})
+
+@app.route("/api/manual-login", methods=["POST"])
+def manual_login():
+    def _worker():
+        cfg = load_config()
+        bot = NaukriBot(cfg, log_callback=append_log)
+        bot.ensure_login_manual_only()
+    threading.Thread(target=_worker, daemon=True).start()
+    append_log("Opening Chrome window for Naukri login setup...", "INFO")
+    return jsonify({"status": "opening_manual_login"})
 
 @app.route("/api/status", methods=["GET"])
 def get_status():
@@ -88,7 +121,7 @@ def get_status():
             "skipped": bot_instance.session_skipped,
             "external": bot_instance.session_external,
             "failed": bot_instance.session_failed,
-            "logs": log_buffer[-25:]
+            "logs": log_buffer[-30:]
         })
     else:
         return jsonify({
@@ -97,7 +130,7 @@ def get_status():
             "skipped": 0,
             "external": 0,
             "failed": 0,
-            "logs": log_buffer[-25:]
+            "logs": log_buffer[-30:]
         })
 
 @app.route("/api/report")

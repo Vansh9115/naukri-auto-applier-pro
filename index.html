@@ -3,29 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Naukri Auto-Applier Pro 🚀 | Web App</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>Naukri Auto-Applier Pro 🚀 | Enterprise Web Application</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0b0f19;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --accent: #38bdf8;
-            --accent-purple: #cba6f7;
-            --accent-green: #22c55e;
-            --accent-red: #f38ba8;
-            --text-color: #f8fafc;
+            --bg: #060913;
+            --surface: #0e1726;
+            --surface-card: rgba(23, 33, 53, 0.7);
+            --primary: #00f2fe;
+            --primary-glow: rgba(0, 242, 254, 0.25);
+            --accent-purple: #9d4edd;
+            --emerald: #10b981;
+            --amber: #f59e0b;
+            --rose: #f43f5e;
+            --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --border-color: rgba(255, 255, 255, 0.1);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(0, 242, 254, 0.4);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Outfit', sans-serif; background: var(--bg-color); color: var(--text-color); line-height: 1.6; background-image: radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.08) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(203, 166, 247, 0.08) 0px, transparent 50%); min-height: 100vh; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(0, 242, 254, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(157, 78, 221, 0.08) 0px, transparent 50%);
+            min-height: 100vh;
+        }
 
+        /* --- Header Bar --- */
         header {
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(12px);
-            padding: 18px 40px;
-            border-bottom: 1px solid var(--border-color);
+            background: rgba(14, 23, 38, 0.85);
+            backdrop-filter: blur(16px);
+            padding: 16px 40px;
+            border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -34,199 +48,310 @@
             z-index: 100;
         }
 
-        .logo { font-size: 22px; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 10px; }
-        .nav-links { display: flex; gap: 20px; }
-        .nav-links a { color: var(--text-muted); text-decoration: none; font-weight: 600; transition: color 0.3s; }
-        .nav-links a:hover { color: var(--accent); }
-
-        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
-
-        .hero {
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(203, 166, 247, 0.12) 100%);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 35px;
-            text-align: center;
-            margin-bottom: 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        .brand {
+            font-size: 22px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 50%, #9d4edd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .hero h1 { font-size: 34px; margin-bottom: 12px; color: #fff; }
-        .hero p { font-size: 16px; color: var(--text-muted); max-width: 700px; margin: 0 auto 25px; }
+        .nav-links { display: flex; gap: 24px; align-items: center; }
+        .nav-links a { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 14px; transition: color 0.3s; }
+        .nav-links a:hover { color: var(--primary); }
 
-        .btn-group { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
-        .btn {
-            background: var(--accent);
-            color: #0f172a;
-            padding: 11px 22px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 700;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
+        .status-badge {
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--emerald);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--emerald);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--emerald);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .container { max-width: 1250px; margin: 30px auto; padding: 0 20px; }
+
+        /* --- Hero Section --- */
+        .hero-banner {
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.1) 0%, rgba(157, 78, 221, 0.1) 100%);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 35px 40px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .hero-text h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; color: #fff; }
+        .hero-text p { font-size: 15px; color: var(--text-muted); max-width: 600px; }
+
+        .action-bar { display: flex; gap: 12px; }
+
+        .btn {
+            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+            color: #060913;
+            padding: 12px 24px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px var(--primary-glow);
         }
         .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
-        .btn-success { background: var(--accent-green); color: #fff; }
-        .btn-purple { background: var(--accent-purple); color: #11111b; }
-        .btn-danger { background: var(--accent-red); color: #11111b; }
+        .btn-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+        .btn-purple { background: linear-gradient(135deg, #9d4edd 0%, #7b2cbf 100%); color: #fff; box-shadow: 0 4px 15px rgba(157, 78, 221, 0.3); }
+        .btn-danger { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); color: #fff; }
 
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        /* --- Multi-Tier Grid --- */
+        .grid-main { display: grid; grid-template-columns: 4.5fr 5.5fr; gap: 25px; }
 
         .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
+            background: var(--surface-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
             padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 25px;
+            transition: border-color 0.3s;
         }
+        .card:hover { border-color: var(--border-hover); }
 
-        .card h2 { font-size: 18px; margin-bottom: 20px; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+        .card-header { font-size: 18px; font-weight: 700; margin-bottom: 20px; color: var(--primary); display: flex; align-items: center; justify-content: space-between; }
 
-        .form-group { margin-bottom: 14px; }
+        .form-row { display: flex; gap: 15px; margin-bottom: 14px; }
+        .form-group { flex: 1; margin-bottom: 14px; }
         .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); }
         .form-group input, .form-group select {
             width: 100%;
-            padding: 10px 14px;
-            background: rgba(15, 23, 42, 0.9);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
+            padding: 11px 15px;
+            background: rgba(6, 9, 19, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 10px;
             color: #fff;
             font-size: 14px;
+            transition: border-color 0.3s;
         }
+        .form-group input:focus, .form-group select:focus { border-color: var(--primary); outline: none; }
 
-        .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
-        .metric-box {
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 12px;
+        /* Resume Upload Box */
+        .file-upload-box {
+            border: 2px dashed rgba(0, 242, 254, 0.3);
+            background: rgba(0, 242, 254, 0.03);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .file-upload-box:hover { border-color: var(--primary); background: rgba(0, 242, 254, 0.08); }
+        .file-upload-box p { font-size: 13px; color: var(--text-muted); margin-top: 5px; }
+
+        /* Metrics Display */
+        .metrics-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+        .metric-card {
+            background: rgba(6, 9, 19, 0.7);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
             text-align: center;
         }
-        .metric-box .val { font-size: 24px; font-weight: 700; color: var(--accent); margin-top: 4px; }
+        .metric-card .title { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+        .metric-card .value { font-size: 26px; font-weight: 800; margin-top: 5px; }
 
-        .console-box {
-            background: #060911;
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 15px;
-            height: 330px;
+        /* Terminal Console */
+        .terminal-box {
+            background: #04060c;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            height: 350px;
             overflow-y: auto;
-            font-family: 'Consolas', monospace;
-            font-size: 13px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
             color: #a7f3d0;
-            line-height: 1.5;
+            line-height: 1.6;
         }
 
-        footer { text-align: center; padding: 25px; color: var(--text-muted); font-size: 14px; border-top: 1px solid var(--border-color); margin-top: 40px; }
+        footer { text-align: center; padding: 30px; color: var(--text-muted); font-size: 14px; border-top: 1px solid var(--border); margin-top: 50px; }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo">🚀 Naukri Auto-Applier Pro</div>
+        <div class="brand">🚀 Naukri Auto-Applier Pro</div>
         <div class="nav-links">
-            <a href="#config">Configuration</a>
-            <a href="#analytics">Current Session Analytics</a>
-            <a href="https://github.com/Vansh9115/naukri-auto-applier-pro" target="_blank">GitHub Repository</a>
+            <a href="#auth">Auth Hub</a>
+            <a href="#params">Parameters</a>
+            <a href="#telemetry">Telemetry</a>
+            <div class="status-badge" id="statusBadge">
+                <div class="pulse-dot"></div> <span id="statusText">IDLE</span>
+            </div>
         </div>
     </header>
 
     <div class="container">
-        <section class="hero">
-            <h1>Autonomous Naukri Application Assistant</h1>
-            <p>Smart Playwright automation engine featuring chatbot question solvers, experience autofill, external portal skipping, and per-session analytics.</p>
-            <div class="btn-group">
-                <button class="btn btn-success" onclick="startBot()">🚀 Start Auto-Applying</button>
-                <button class="btn btn-purple" onclick="googleLogin()">🌐 Sign in with Google to Naukri</button>
-                <button class="btn btn-danger" onclick="stopBot()">⏸ Stop Session</button>
-                <a href="https://github.com/Vansh9115/naukri-auto-applier-pro" class="btn" target="_blank">🐙 GitHub Code</a>
+        <div class="hero-banner">
+            <div class="hero-text">
+                <h1>Multi-Tier Enterprise Job Automation</h1>
+                <p>Automate your job search on Naukri with intelligent chatbot solvers, resume uploading, and real-time session telemetry.</p>
             </div>
-        </section>
-
-        <div class="grid">
-            <!-- Left Card: Config Generator -->
-            <div class="card" id="config">
-                <h2>⚙️ Application Profile & Parameters</h2>
-                <form id="configForm">
-                    <div class="form-group">
-                        <label>Target Job Keywords (comma-separated)</label>
-                        <input type="text" id="keywords" value="Operation Management, Finance, AML">
-                    </div>
-                    <div class="form-group">
-                        <label>Target Locations (comma-separated)</label>
-                        <input type="text" id="locations" value="Bangalore, Gurugram, Gurgaon, Delhi NCR, Noida, Hyderabad, Pune">
-                    </div>
-                    <div style="display: flex; gap: 12px;">
-                        <div class="form-group" style="flex:1;">
-                            <label>Total Experience (Years)</label>
-                            <input type="number" id="experience" value="4">
-                        </div>
-                        <div class="form-group" style="flex:1;">
-                            <label>Notice Period</label>
-                            <select id="notice">
-                                <option value="15 Days or less">15 Days or less</option>
-                                <option value="Immediate">Immediate</option>
-                                <option value="30 Days">30 Days</option>
-                                <option value="60 Days">60 Days</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 12px;">
-                        <div class="form-group" style="flex:1;">
-                            <label>Current CTC (LPA)</label>
-                            <input type="number" step="0.1" id="currCtc" value="4.0">
-                        </div>
-                        <div class="form-group" style="flex:1;">
-                            <label>Expected CTC (LPA)</label>
-                            <input type="number" step="0.1" id="expCtc" value="6.5">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Resume PDF File Path</label>
-                        <input type="text" id="resumePath" value="C:/Users/vansh/OneDrive/Desktop/Vansh Lalwani - Resume.pdf">
-                    </div>
-                    <button type="button" class="btn" style="width: 100%;" onclick="saveConfig()">💾 Save Settings</button>
-                </form>
+            <div class="action-bar">
+                <button class="btn btn-green" onclick="startBot()">🚀 Launch Engine</button>
+                <button class="btn btn-danger" onclick="stopBot()">⏸ Pause</button>
             </div>
+        </div>
 
-            <!-- Right Card: Live Log & Session Metrics -->
-            <div class="card" id="analytics">
-                <h2>📊 Current Session Metrics (Resets Per Run)</h2>
-                <div class="metrics-grid">
-                    <div class="metric-box">
-                        <div style="font-size: 10px; color: var(--text-muted);">APPLIED</div>
-                        <div class="val" style="color: var(--accent-green);" id="statApplied">0</div>
+        <div class="grid-main">
+            <!-- Left Side: Auth & Params Tiers -->
+            <div>
+                <!-- Tier 1: Authentication Hub -->
+                <div class="card" id="auth">
+                    <div class="card-header">
+                        <span>🔑 Tier 1: Naukri Authentication Hub</span>
                     </div>
-                    <div class="metric-box">
-                        <div style="font-size: 10px; color: var(--text-muted);">DUPLICATES</div>
-                        <div class="val" style="color: #eab308;" id="statSkipped">0</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Naukri Email / Username</label>
+                            <input type="text" id="naukriEmail" placeholder="user@domain.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Naukri Password</label>
+                            <input type="password" id="naukriPassword" placeholder="••••••••">
+                        </div>
                     </div>
-                    <div class="metric-box">
-                        <div style="font-size: 10px; color: var(--text-muted);">EXTERNAL</div>
-                        <div class="val" style="color: var(--accent-purple);" id="statExternal">0</div>
-                    </div>
-                    <div class="metric-box">
-                        <div style="font-size: 10px; color: var(--text-muted);">FAILED</div>
-                        <div class="val" style="color: var(--accent-red);" id="statFailed">0</div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-purple" style="flex:1;" onclick="googleLogin()">🌐 Sign in with Google to Naukri</button>
+                        <button class="btn" style="flex:1; background: rgba(255,255,255,0.1); color: #fff;" onclick="manualLogin()">💻 Open Chrome Window</button>
                     </div>
                 </div>
-                <h2>📋 Live Session Output</h2>
-                <div class="console-box" id="consoleOutput">
-                    ℹ️ Web App Interface Initialized.<br>
-                    ℹ️ Current session metrics reset to 0.<br>
-                    ℹ️ Ready to start auto-application process...
+
+                <!-- Tier 2: Application Parameters & Resume Picker -->
+                <div class="card" id="params">
+                    <div class="card-header">
+                        <span>⚙️ Tier 2: Profile & Job Search Parameters</span>
+                    </div>
+                    <form id="configForm">
+                        <div class="form-group">
+                            <label>Target Job Keywords (comma-separated)</label>
+                            <input type="text" id="keywords" value="Operation Management, Finance, AML">
+                        </div>
+                        <div class="form-group">
+                            <label>Target Locations (comma-separated)</label>
+                            <input type="text" id="locations" value="Bangalore, Gurugram, Gurgaon, Delhi NCR, Noida, Hyderabad, Pune">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Work Experience (Years)</label>
+                                <input type="number" id="experience" value="4">
+                            </div>
+                            <div class="form-group">
+                                <label>Notice Period</label>
+                                <select id="notice">
+                                    <option value="15 Days or less">15 Days or less</option>
+                                    <option value="Immediate">Immediate</option>
+                                    <option value="30 Days">30 Days</option>
+                                    <option value="60 Days">60 Days</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Current CTC (LPA)</label>
+                                <input type="number" step="0.1" id="currCtc" value="4.0">
+                            </div>
+                            <div class="form-group">
+                                <label>Expected CTC (LPA)</label>
+                                <input type="number" step="0.1" id="expCtc" value="6.5">
+                            </div>
+                        </div>
+
+                        <!-- Resume PDF Upload Control -->
+                        <div class="form-group">
+                            <label>Attached Resume File</label>
+                            <div class="file-upload-box" onclick="document.getElementById('resumeFileInput').click()">
+                                <span style="font-size: 24px;">📁</span>
+                                <div style="font-weight: 700; margin-top: 4px;" id="resumeFileName">Click to Browse & Attach Resume PDF</div>
+                                <p id="resumePathDisplay">C:/Users/vansh/OneDrive/Desktop/Vansh Lalwani - Resume.pdf</p>
+                            </div>
+                            <input type="file" id="resumeFileInput" accept=".pdf,.doc,.docx" style="display: none;" onchange="uploadResumeFile(this)">
+                        </div>
+
+                        <button type="button" class="btn" style="width: 100%;" onclick="saveConfig()">💾 Save Parameters</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Side: Telemetry & Analytics -->
+            <div id="telemetry">
+                <!-- Session Metrics -->
+                <div class="card">
+                    <div class="card-header">
+                        <span>📊 Tier 3: Real-Time Session Telemetry (Resets per Run)</span>
+                        <button class="btn btn-purple" style="font-size: 12px; padding: 6px 12px;" onclick="viewReport()">View Report</button>
+                    </div>
+                    <div class="metrics-container">
+                        <div class="metric-card">
+                            <div class="title">APPLIED</div>
+                            <div class="value" style="color: var(--emerald);" id="statApplied">0</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="title">DUPLICATES</div>
+                            <div class="value" style="color: var(--amber);" id="statSkipped">0</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="title">EXTERNAL</div>
+                            <div class="value" style="color: var(--accent-purple);" id="statExternal">0</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="title">FAILED</div>
+                            <div class="value" style="color: var(--rose);" id="statFailed">0</div>
+                        </div>
+                    </div>
+                    <div class="card-header" style="margin-top: 10px; margin-bottom: 10px;">
+                        <span>📋 Execution Console Output</span>
+                    </div>
+                    <div class="terminal-box" id="consoleOutput">
+                        ℹ️ Enterprise Web Application initialized.<br>
+                        ℹ️ Session metrics reset to 0.<br>
+                        ℹ️ Ready to start automation engine...
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <footer>
-        <p>Naukri Auto-Applier Pro &copy; 2026 | Hosted on <a href="https://github.com/Vansh9115/naukri-auto-applier-pro" target="_blank" style="color: var(--accent);">GitHub Repository</a></p>
+        <p>Naukri Auto-Applier Pro &copy; 2026 | Enterprise Edition | Hosted on <a href="https://github.com/Vansh9115/naukri-auto-applier-pro" target="_blank" style="color: var(--primary);">GitHub Repository</a></p>
     </footer>
 
     <script>
@@ -239,48 +364,108 @@
                     document.getElementById('statSkipped').innerText = data.skipped || 0;
                     document.getElementById('statExternal').innerText = data.external || 0;
                     document.getElementById('statFailed').innerText = data.failed || 0;
+                    
+                    const badge = document.getElementById('statusBadge');
+                    const text = document.getElementById('statusText');
+                    if (data.running) {
+                        badge.style.borderColor = 'rgba(16, 185, 129, 0.6)';
+                        text.innerText = 'RUNNING';
+                    } else {
+                        badge.style.borderColor = 'rgba(148, 163, 184, 0.3)';
+                        text.innerText = 'IDLE';
+                    }
+
                     if (data.logs) {
-                        document.getElementById('consoleOutput').innerHTML = data.logs.join('<br>');
+                        const consoleElem = document.getElementById('consoleOutput');
+                        consoleElem.innerHTML = data.logs.join('<br>');
+                        consoleElem.scrollTop = consoleElem.scrollHeight;
                     }
                 }
             } catch (e) {}
         }
 
+        async function loadConfig() {
+            try {
+                const res = await fetch('/api/config');
+                if (res.ok) {
+                    const cfg = await res.json();
+                    if (cfg.naukri_email) document.getElementById('naukriEmail').value = cfg.naukri_email;
+                    if (cfg.naukri_password) document.getElementById('naukriPassword').value = cfg.naukri_password;
+                    if (cfg.keywords) document.getElementById('keywords').value = cfg.keywords.join(', ');
+                    if (cfg.locations) document.getElementById('locations').value = cfg.locations.join(', ');
+                    if (cfg.experience_years) document.getElementById('experience').value = cfg.experience_years;
+                    if (cfg.notice_period_str) document.getElementById('notice').value = cfg.notice_period_str;
+                    if (cfg.current_ctc_lpa) document.getElementById('currCtc').value = cfg.current_ctc_lpa;
+                    if (cfg.expected_ctc_lpa) document.getElementById('expCtc').value = cfg.expected_ctc_lpa;
+                    if (cfg.resume_path) document.getElementById('resumePathDisplay').innerText = cfg.resume_path;
+                }
+            } catch(e) {}
+        }
+
         async function saveConfig() {
             const config = {
+                naukri_email: document.getElementById('naukriEmail').value.trim(),
+                naukri_password: document.getElementById('naukriPassword').value.trim(),
                 keywords: document.getElementById('keywords').value.split(',').map(s => s.trim()),
                 locations: document.getElementById('locations').value.split(',').map(s => s.trim()),
                 experience_years: parseInt(document.getElementById('experience').value),
                 notice_period_str: document.getElementById('notice').value,
                 current_ctc_lpa: parseFloat(document.getElementById('currCtc').value),
-                expected_ctc_lpa: parseFloat(document.getElementById('expCtc').value),
-                resume_path: document.getElementById('resumePath').value
+                expected_ctc_lpa: parseFloat(document.getElementById('expCtc').value)
             };
             await fetch('/api/config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(config)
             });
-            alert('Settings saved successfully!');
+            alert('Parameters saved successfully!');
+        }
+
+        async function uploadResumeFile(input) {
+            if (!input.files || input.files.length === 0) return;
+            const formData = new FormData();
+            formData.append('resume', input.files[0]);
+            
+            document.getElementById('resumeFileName').innerText = 'Uploading: ' + input.files[0].name;
+            const res = await fetch('/api/upload-resume', {
+                method: 'POST',
+                body: formData
+            });
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('resumeFileName').innerText = 'Attached: ' + input.files[0].name;
+                document.getElementById('resumePathDisplay').innerText = data.resume_path;
+                alert('Resume uploaded and attached successfully!');
+            }
         }
 
         async function startBot() {
             await saveConfig();
             await fetch('/api/start', { method: 'POST' });
-            alert('Auto-application session started! Counters reset to 0.');
+            alert('Automation Engine launched! Session counters reset to 0.');
         }
 
         async function googleLogin() {
             await fetch('/api/google-login', { method: 'POST' });
-            alert('Opening Chrome window for Google Sign In to Naukri...');
+            alert('Opening Chrome for Google Sign-in to Naukri...');
+        }
+
+        async function manualLogin() {
+            await fetch('/api/manual-login', { method: 'POST' });
+            alert('Opening Chrome window for Naukri login setup...');
         }
 
         async function stopBot() {
             await fetch('/api/stop', { method: 'POST' });
-            alert('Bot stop requested!');
+            alert('Engine stop requested!');
         }
 
-        setInterval(fetchStatus, 2500);
+        function viewReport() {
+            window.open('/api/report', '_blank');
+        }
+
+        loadConfig();
+        setInterval(fetchStatus, 2000);
     </script>
 </body>
 </html>
