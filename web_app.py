@@ -21,7 +21,7 @@ log_buffer = []
 def append_log(msg, level="INFO"):
     icons = {"INFO": "ℹ️", "SUCCESS": "✅", "WARNING": "⚠️", "ERROR": "❌"}
     log_buffer.append(f"{icons.get(level, 'ℹ️')} {msg}")
-    if len(log_buffer) > 150:
+    if len(log_buffer) > 200:
         log_buffer.pop(0)
 
 
@@ -65,27 +65,29 @@ def upload_resume():
 def start_bot():
     global bot_instance, bot_thread, log_buffer
     if bot_thread and bot_thread.is_alive():
-        return jsonify({"status": "already_running"})
+        return jsonify({"status": "already_running", "message": "Bot session is already running."})
+    
     cfg = load_config()
-    log_buffer = ["🚀 New session — counters reset to 0."]
+    log_buffer = ["🚀 New session started — resetting counters."]
     bot_instance = NaukriBot(cfg, log_callback=append_log)
 
     def worker():
         try:
             bot_instance.start()
         except Exception as e:
-            append_log(f"Engine error: {e}", "ERROR")
+            append_log(f"Session Error: {e}", "ERROR")
 
     bot_thread = threading.Thread(target=worker, daemon=True)
     bot_thread.start()
-    return jsonify({"status": "started"})
+    append_log("🚀 Application session initiated!", "SUCCESS")
+    return jsonify({"status": "started", "message": "Session started."})
 
 
 @app.route("/api/stop", methods=["POST"])
 def stop_bot():
     if bot_instance:
         bot_instance.stop()
-        append_log("⏸ Stop requested.", "WARNING")
+        append_log("⏸ Stop requested by user.", "WARNING")
         return jsonify({"status": "stop_requested"})
     return jsonify({"status": "not_running"})
 
@@ -93,9 +95,7 @@ def stop_bot():
 @app.route("/api/google-login", methods=["POST"])
 def google_login():
     global login_thread
-    append_log("🌐 Launching Chrome for Google sign-in...", "INFO")
-    append_log("👉 A Chrome window will open. Sign in with Google on Naukri.", "INFO")
-    append_log("👉 After logging in, CLOSE the Chrome window to save your session.", "INFO")
+    append_log("🌐 Opening Chrome for login setup...", "INFO")
 
     def worker():
         try:
@@ -103,19 +103,17 @@ def google_login():
             bot = NaukriBot(cfg, log_callback=append_log)
             bot.ensure_google_login()
         except Exception as e:
-            append_log(f"Login error: {e}", "ERROR")
+            append_log(f"Google Login error: {e}", "ERROR")
 
     login_thread = threading.Thread(target=worker, daemon=True)
     login_thread.start()
-    return jsonify({"status": "opening_chrome", "message": "Chrome is opening. Sign in with Google, then CLOSE Chrome."})
+    return jsonify({"status": "opening_chrome", "message": "Chrome window launching. Log into Naukri and keep session open."})
 
 
 @app.route("/api/manual-login", methods=["POST"])
 def manual_login():
     global login_thread
-    append_log("💻 Launching Chrome for email login...", "INFO")
-    append_log("👉 A Chrome window will open. Log in with email & password.", "INFO")
-    append_log("👉 After logging in, CLOSE the Chrome window.", "INFO")
+    append_log("💻 Opening Chrome for login setup...", "INFO")
 
     def worker():
         try:
@@ -123,11 +121,11 @@ def manual_login():
             bot = NaukriBot(cfg, log_callback=append_log)
             bot.ensure_login_manual_only()
         except Exception as e:
-            append_log(f"Login error: {e}", "ERROR")
+            append_log(f"Manual Login error: {e}", "ERROR")
 
     login_thread = threading.Thread(target=worker, daemon=True)
     login_thread.start()
-    return jsonify({"status": "opening_chrome", "message": "Chrome is opening. Log in, then CLOSE Chrome."})
+    return jsonify({"status": "opening_chrome", "message": "Chrome window launching. Log into Naukri."})
 
 
 @app.route("/api/status", methods=["GET"])

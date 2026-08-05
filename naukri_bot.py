@@ -3,9 +3,7 @@ import sys
 import json
 import time
 import random
-import subprocess
 import urllib.parse
-import socket
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 from tracker import JobTracker
@@ -17,20 +15,8 @@ def load_config(config_path="config.json"):
         return json.load(f)
 
 
-def find_chrome():
-    """Find Google Chrome executable on Windows."""
-    for p in [
-        os.path.join(os.environ.get("PROGRAMFILES", ""), r"Google\Chrome\Application\chrome.exe"),
-        os.path.join(os.environ.get("PROGRAMFILES(X86)", ""), r"Google\Chrome\Application\chrome.exe"),
-        os.path.join(os.environ.get("LOCALAPPDATA", ""), r"Google\Chrome\Application\chrome.exe"),
-    ]:
-        if os.path.exists(p):
-            return p
-    return None
-
-
 def cleanup_locks(dirpath):
-    """Remove Chrome singleton locks so a new instance can start."""
+    """Remove Playwright/Chrome lock files if present."""
     for name in ("SingletonLock", "SingletonCookie", "SingletonSocket"):
         fp = os.path.join(dirpath, name)
         if os.path.exists(fp):
@@ -40,64 +26,12 @@ def cleanup_locks(dirpath):
                 pass
 
 
-def is_port_open(port):
-    """Check if a TCP port is listening on localhost."""
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.settimeout(1)
-            return s.connect_ex(("127.0.0.1", port)) == 0
-    except Exception:
-        return False
-
-
-def open_chrome(url, user_data_dir, debug_port=None, log_fn=None):
-    """
-    Launch REAL Google Chrome with a dedicated profile directory.
-    If debug_port is set, enables --remote-debugging-port for CDP.
-    Returns the Popen process or None.
-    """
-    chrome = find_chrome()
-    if not chrome:
-        if log_fn:
-            log_fn("Chrome.exe not found! Please install Google Chrome.", "ERROR")
-        return None
-
-    ud = os.path.abspath(user_data_dir)
-    Path(ud).mkdir(parents=True, exist_ok=True)
-    cleanup_locks(ud)
-
-    args = [
-        chrome,
-        f"--user-data-dir={ud}",
-        "--no-first-run",
-        "--no-default-browser-check",
-        "--start-maximized",
-        "--disable-popup-blocking",
-    ]
-    if debug_port:
-        args.append(f"--remote-debugging-port={debug_port}")
-    args.append(url)
-
-    if log_fn:
-        log_fn(f"Launching Chrome: {os.path.basename(chrome)}", "INFO")
-
-    try:
-        proc = subprocess.Popen(args)
-        if log_fn:
-            log_fn(f"Chrome started (PID {proc.pid})", "SUCCESS")
-        return proc
-    except Exception as e:
-        if log_fn:
-            log_fn(f"Chrome launch failed: {e}", "ERROR")
-        return None
-
-
 # ---------------------------------------------------------------------------
-# Smart Answer Engine
+# Smart Answer Engine — Intelligent questionnaire and chatbot solver
 # ---------------------------------------------------------------------------
 
 class SmartAnswerEngine:
-    """Auto-answers any Naukri chatbot or form question."""
+    """Answers any Naukri chatbot or questionnaire prompt automatically."""
 
     def __init__(self, config):
         self.exp = config.get("experience_years", 4)
@@ -110,26 +44,26 @@ class SmartAnswerEngine:
         self.degree = config.get("degree", "B.Com")
 
     def answer(self, question: str) -> str:
-        q = question.lower()
-        if "yy/mm" in q or "years/months" in q:
+        q = question.lower().strip()
+        if "yy/mm" in q or "years/months" in q or "yy / mm" in q:
             return f"{self.exp:02d}/00"
         if any(k in q for k in ["current ctc", "present ctc", "current salary", "present salary", "current package", "last drawn"]):
             return str(self.curr_ctc)
         if any(k in q for k in ["expected ctc", "expected salary", "desired ctc", "desired salary", "expected package"]):
             return str(self.exp_ctc)
-        if any(k in q for k in ["notice period", "notice", "days to join", "when can you join"]):
+        if any(k in q for k in ["notice period", "notice", "days to join", "when can you join", "joining time"]):
             return str(self.notice_days)
         if any(k in q for k in ["current location", "current city", "preferred location", "which city"]):
             return self.locations[0] if self.locations else "Bangalore"
         if "relocat" in q:
             return "Yes" if self.relocate else "No"
-        if "gender" in q:
+        if "gender" in q or "sex" in q:
             return self.gender
         if any(k in q for k in ["graduation", "degree", "qualification", "education"]):
             return self.degree
         if "age" in q or "date of birth" in q:
             return "25"
-        # Default: experience years (most chatbot questions ask about skill experience)
+        # Default: experience years (most chatbot prompts ask for years of experience in a technology)
         return str(self.exp)
 
     def should_select(self, option_text: str) -> bool:
@@ -147,12 +81,8 @@ class SmartAnswerEngine:
 
 
 # ---------------------------------------------------------------------------
-# Main Bot
+# Main Bot Engine using Playwright + Real Installed Chrome
 # ---------------------------------------------------------------------------
-
-PROFILE_DIR = "./naukri_login_profile"
-CDP_PORT = 9222
-
 
 class NaukriBot:
     def __init__(self, config=None, log_callback=None):
@@ -165,6 +95,8 @@ class NaukriBot:
         self.session_external = 0
         self.stop_requested = False
         self.log_callback = log_callback
+        self.user_data_dir = os.path.abspath(self.config.get("chrome_user_data_dir", "./naukri_chrome_profile"))
+        Path(self.user_data_dir).mkdir(parents=True, exist_ok=True)
 
     def log(self, msg, level="INFO"):
         print(f"[{level}] {msg}")
@@ -182,52 +114,116 @@ class NaukriBot:
 
     def stop(self):
         self.stop_requested = True
-        self.log("Stop requested.", "WARNING")
+        self.log("Stop requested by user.", "WARNING")
+
+    def _launch_browser_context(self, p):
+        """Launch Playwright using real installed Google Chrome (channel='chrome')."""
+        cleanup_locks(self.user_data_dir)
+        args = [
+            "--disable-blink-features=AutomationControlled",
+            "--start-maximized",
+            "--no-sandbox",
+            "--disable-notifications",
+            "--deny-permission-prompts",
+            "--hide-crash-restore-bubble",
+            "--disable-session-crashed-bubble",
+            "--disable-infobars",
+        ]
+        
+        # Try launching real Chrome first via channel="chrome"
+        try:
+            return p.chromium.launch_persistent_context(
+                user_data_dir=self.user_data_dir,
+                channel="chrome",
+                headless=False,
+                args=args,
+                no_viewport=True
+            )
+        except Exception as e:
+            self.log(f"Channel 'chrome' note ({e}). Falling back to bundled Chromium...", "WARNING")
+            return p.chromium.launch_persistent_context(
+                user_data_dir=self.user_data_dir,
+                headless=False,
+                args=args,
+                no_viewport=True
+            )
 
     # ══════════════════════════════════════════════════════════════════
-    # LOGIN — Opens real Chrome so user can log in with Google/Email
+    # LOGIN FLOWS
     # ══════════════════════════════════════════════════════════════════
 
     def ensure_google_login(self):
-        """Open real Chrome to Naukri login. User signs in with Google."""
-        self.log("🌐 Opening your Chrome browser for Google login...", "INFO")
-        proc = open_chrome(
-            "https://www.naukri.com/nlogin/login",
-            PROFILE_DIR,
-            log_fn=self.log,
-        )
-        if not proc:
-            self.log("❌ Failed to open Chrome! Is Google Chrome installed?", "ERROR")
-            return
-        self.log("✅ Chrome opened! Sign in with Google on the Naukri page.", "SUCCESS")
-        self.log("📌 After signing in, CLOSE the Chrome window to save your session.", "INFO")
-        try:
-            proc.wait()  # Block until user closes Chrome
-        except Exception:
-            pass
-        self.log("✅ Login session saved! You can now click 'Start Applying'.", "SUCCESS")
+        """Opens real Chrome so user can click 'Login with Google' on Naukri."""
+        self.log("🌐 Opening Chrome window for Google login...", "INFO")
+        with sync_playwright() as p:
+            ctx = self._launch_browser_context(p)
+            page = ctx.pages[0] if ctx.pages else ctx.new_page()
+            try:
+                page.bring_to_front()
+            except Exception:
+                pass
+            
+            page.goto("https://www.naukri.com/nlogin/login", wait_until="domcontentloaded")
+            self.log("✅ Chrome window opened! Please sign in to Naukri using Google or Email.", "SUCCESS")
+            self.log("📌 Keep the Chrome window open or close it when done. Session is saved automatically.", "INFO")
+
+            # Wait until user closes the window or logs in
+            start_time = time.time()
+            while time.time() - start_time < 300: # 5 mins max wait
+                if self.stop_requested:
+                    break
+                try:
+                    if len(ctx.pages) == 0:
+                        break
+                    if self._is_logged_in(page, ctx):
+                        self.log("✅ Login detected! Session successfully saved.", "SUCCESS")
+                        time.sleep(2)
+                        break
+                except Exception:
+                    break
+                time.sleep(2)
+
+            try:
+                ctx.close()
+            except Exception:
+                pass
 
     def ensure_login_manual_only(self):
-        """Open real Chrome for email/password login."""
+        """Opens Chrome for email/password login."""
         self.log("💻 Opening Chrome for email login...", "INFO")
-        proc = open_chrome(
-            "https://www.naukri.com/nlogin/login",
-            PROFILE_DIR,
-            log_fn=self.log,
-        )
-        if not proc:
-            self.log("❌ Failed to open Chrome!", "ERROR")
-            return
-        self.log("✅ Chrome opened! Log in with your email & password.", "SUCCESS")
-        self.log("📌 After logging in, CLOSE Chrome to save your session.", "INFO")
-        try:
-            proc.wait()
-        except Exception:
-            pass
-        self.log("✅ Login saved! Click 'Start Applying'.", "SUCCESS")
+        with sync_playwright() as p:
+            ctx = self._launch_browser_context(p)
+            page = ctx.pages[0] if ctx.pages else ctx.new_page()
+            try:
+                page.bring_to_front()
+            except Exception:
+                pass
+
+            page.goto("https://www.naukri.com/nlogin/login", wait_until="domcontentloaded")
+            self.log("✅ Chrome window opened! Please log into Naukri.", "SUCCESS")
+
+            start_time = time.time()
+            while time.time() - start_time < 300:
+                if self.stop_requested:
+                    break
+                try:
+                    if len(ctx.pages) == 0:
+                        break
+                    if self._is_logged_in(page, ctx):
+                        self.log("✅ Login confirmed! Session saved.", "SUCCESS")
+                        time.sleep(2)
+                        break
+                except Exception:
+                    break
+                time.sleep(2)
+
+            try:
+                ctx.close()
+            except Exception:
+                pass
 
     # ══════════════════════════════════════════════════════════════════
-    # AUTOMATION — Launches Chrome with CDP and connects Playwright
+    # MAIN APPLICATION ENGINE
     # ══════════════════════════════════════════════════════════════════
 
     def start(self):
@@ -236,65 +232,46 @@ class NaukriBot:
         self.session_failed = 0
         self.session_external = 0
         self.stop_requested = False
-        self.log("🚀 Starting auto-application session...")
-
-        # Launch Chrome with remote debugging
-        self.log("Launching Chrome with automation port...")
-        proc = open_chrome(
-            "https://www.naukri.com/mnjuser/homepage",
-            PROFILE_DIR,
-            debug_port=CDP_PORT,
-            log_fn=self.log,
-        )
-        if not proc:
-            self.log("❌ Cannot start: Chrome not found.", "ERROR")
-            return
-
-        # Wait for debugging port to become available
-        self.log("Waiting for Chrome to be ready...")
-        for i in range(20):
-            if is_port_open(CDP_PORT):
-                break
-            time.sleep(1)
-        else:
-            self.log("❌ Chrome debugging port not available. Try closing Chrome and retry.", "ERROR")
-            return
-
-        time.sleep(2)
-        self.log("Connecting Playwright to Chrome...")
+        self.log("🚀 Starting Naukri Auto-Application Session...")
 
         with sync_playwright() as p:
+            ctx = self._launch_browser_context(p)
+            page = ctx.pages[0] if ctx.pages else ctx.new_page()
             try:
-                browser = p.chromium.connect_over_cdp(f"http://127.0.0.1:{CDP_PORT}")
-            except Exception as e:
-                self.log(f"❌ Cannot connect to Chrome: {e}", "ERROR")
-                self.log("💡 Try: Close all Chrome windows, then click Start again.", "INFO")
-                return
-
-            contexts = browser.contexts
-            if not contexts:
-                self.log("❌ No browser context found.", "ERROR")
-                return
-
-            context = contexts[0]
-            page = context.pages[0] if context.pages else context.new_page()
-
-            # Check login
-            try:
-                page.goto("https://www.naukri.com/mnjuser/homepage", wait_until="domcontentloaded")
-                self.random_sleep(2, 3)
+                page.bring_to_front()
             except Exception:
                 pass
 
-            if not self._is_logged_in(page, context):
-                self.log("⚠️ Not logged in! Use 'Login with Google' first, then try again.", "ERROR")
-                try:
-                    browser.close()
-                except Exception:
-                    pass
-                return
+            self.log("Checking Naukri login session...")
+            try:
+                page.goto("https://www.naukri.com/mnjuser/homepage", wait_until="domcontentloaded")
+                self.random_sleep(2, 3)
+            except Exception as e:
+                self.log(f"Navigation note: {e}", "WARNING")
 
-            self.log("✅ Logged in! Searching for jobs...", "SUCCESS")
+            if not self._is_logged_in(page, ctx):
+                self.log("⚠️ Not logged in! Opening login page in Chrome...", "WARNING")
+                page.goto("https://www.naukri.com/nlogin/login", wait_until="domcontentloaded")
+                self.log("👉 Please complete sign in in the opened Chrome window. Waiting up to 3 minutes...", "INFO")
+                
+                logged_in = False
+                for _ in range(60):
+                    if self.stop_requested:
+                        break
+                    time.sleep(3)
+                    if self._is_logged_in(page, ctx):
+                        logged_in = True
+                        break
+
+                if not logged_in:
+                    self.log("❌ Login timeout or not logged in. Please click 'Login with Google' first.", "ERROR")
+                    try:
+                        ctx.close()
+                    except Exception:
+                        pass
+                    return
+
+            self.log("✅ Login confirmed! Searching jobs...", "SUCCESS")
 
             keywords = self.config.get("keywords", ["Operations Management"])
             max_apps = self.config.get("max_applications_per_run", 30)
@@ -302,30 +279,30 @@ class NaukriBot:
             for kw in keywords:
                 if self.stop_requested or self.session_applied >= max_apps:
                     break
-                self.log(f"\n🔍 Searching: '{kw}'")
+                self.log(f"\n🔍 Searching for keyword: '{kw}'")
                 self._search_and_apply(page, kw)
 
             self.log(
-                f"\n🏁 Session complete! Applied={self.session_applied} "
-                f"Skipped={self.session_skipped} External={self.session_external} "
-                f"Failed={self.session_failed}",
+                f"\n🏁 Session Complete! Applied: {self.session_applied} | "
+                f"Skipped: {self.session_skipped} | External Redirects: {self.session_external} | "
+                f"Failed: {self.session_failed}",
                 "SUCCESS",
             )
             try:
-                browser.close()
+                ctx.close()
             except Exception:
                 pass
 
     def _is_logged_in(self, page, context):
         try:
             url = page.url.lower()
-            if any(x in url for x in ["mnjuser/homepage", "mnjuser/profile"]):
+            if any(x in url for x in ["mnjuser/homepage", "mnjuser/profile", "naukri.com/mnjuser"]):
                 return True
-            el = page.query_selector(".nI-gD-profile, a[href*='mnjuser/profile'], .user-name")
+            el = page.query_selector(".nI-gD-profile, a[href*='mnjuser/profile'], .user-name, div[class*='profile']")
             if el and el.is_visible():
                 return True
             for c in context.cookies():
-                if c.get("name") in ("nauk_at", "nls", "n_user"):
+                if c.get("name") in ("nauk_at", "nls", "n_user", "Naukri_User"):
                     return True
         except Exception:
             pass
@@ -338,25 +315,27 @@ class NaukriBot:
             f"https://www.naukri.com/{keyword.lower().replace(' ', '-')}-jobs?"
             f"k={urllib.parse.quote(keyword)}&l={urllib.parse.quote(locs)}&experience={exp}"
         )
+        self.log(f"Loading search URL: {url}")
         try:
             page.goto(url, wait_until="domcontentloaded")
             self.random_sleep(3, 5)
         except Exception as e:
-            self.log(f"Search error: {e}", "ERROR")
+            self.log(f"Search loading error: {e}", "ERROR")
             return
 
         for pg_num in range(1, 6):
             if self.stop_requested or self.session_applied >= self.config.get("max_applications_per_run", 30):
                 break
 
-            self.log(f"  Page {pg_num}...")
+            self.log(f"Processing Page {pg_num} for '{keyword}'...")
             try:
                 page.wait_for_selector(".srp-jobtuple-wrapper, article.jobTuple, .cust-job-tuple", timeout=8000)
             except Exception:
+                self.log(f"No job cards found on page {pg_num}.", "WARNING")
                 break
 
             cards = page.query_selector_all(".srp-jobtuple-wrapper, article.jobTuple, .cust-job-tuple")
-            self.log(f"  {len(cards)} jobs found.")
+            self.log(f"Found {len(cards)} job cards on page {pg_num}.")
 
             jobs = []
             for card in cards:
@@ -369,7 +348,9 @@ class NaukriBot:
                     ce = card.query_selector("a.subTitle, span.comp-name")
                     company = ce.text_content().strip() if ce else "Unknown"
                     jid = card.get_attribute("data-job-id") or href
-                    if self.tracker.is_applied(jid, href, title, company):
+                    
+                    badge = card.query_selector(".already-applied, span:has-text('Applied')")
+                    if badge or self.tracker.is_applied(jid, href, title, company):
                         self.session_skipped += 1
                         continue
                     jobs.append({"id": jid, "title": title, "company": company, "url": href})
@@ -379,7 +360,7 @@ class NaukriBot:
             for job in jobs:
                 if self.stop_requested or self.session_applied >= self.config.get("max_applications_per_run", 30):
                     break
-                self._apply_job(page, job)
+                self._apply_job(page.context, job)
                 self.random_sleep()
 
             try:
@@ -392,9 +373,9 @@ class NaukriBot:
             except Exception:
                 break
 
-    def _apply_job(self, parent_page, job):
-        self.log(f"👉 {job['title']} @ {job['company']}")
-        pg = parent_page.context.new_page()
+    def _apply_job(self, context, job):
+        self.log(f"👉 Opening Job: {job['title']} @ {job['company']}")
+        pg = context.new_page()
         try:
             pg.goto(job["url"], wait_until="domcontentloaded")
             self.random_sleep(2, 3)
@@ -402,37 +383,40 @@ class NaukriBot:
             btn = pg.query_selector("button#apply-button, button.apply-button, button:has-text('Apply'), .apply-button-container button")
             if not btn:
                 al = pg.query_selector(".already-applied, span:has-text('Already Applied')")
-                self.tracker.log_application(job["id"], job["title"], job["company"], "", job["url"],
-                    status="ALREADY_APPLIED" if al else "SKIPPED", notes="" if al else "No button")
+                if al:
+                    self.tracker.log_application(job["id"], job["title"], job["company"], "", job["url"], status="ALREADY_APPLIED")
+                else:
+                    self.tracker.log_application(job["id"], job["title"], job["company"], "", job["url"], status="SKIPPED", notes="No Apply button")
                 self.session_skipped += 1
                 pg.close()
                 return
 
             txt = (btn.text_content() or "").lower()
             if any(x in txt for x in ["company site", "company website", "external", "apply on company"]):
-                self.log("  ⏭ External portal. Skip.", "INFO")
+                self.log("  ⏭ Skipping company portal redirect.", "INFO")
                 self.tracker.log_application(job["id"], job["title"], job["company"], "", job["url"], status="EXTERNAL", notes=txt)
                 self.session_external += 1
                 pg.close()
                 return
 
+            self.log("  Clicking Apply...")
             btn.click()
             self.random_sleep(2, 4)
 
             if "naukri.com" not in pg.url.lower():
-                self.log("  ⏭ External redirect. Skip.", "INFO")
+                self.log("  ⏭ External portal redirect detected. Skipping.", "INFO")
                 self.tracker.log_application(job["id"], job["title"], job["company"], "", job["url"], status="EXTERNAL")
                 self.session_external += 1
                 pg.close()
                 return
 
-            self._solve_all(pg)
-            self.log(f"  🎯 Applied: {job['title']}", "SUCCESS")
+            self._solve_questionnaires_and_chatbot(pg)
+            self.log(f"  🎯 SUCCESS: Applied to {job['title']} @ {job['company']}", "SUCCESS")
             self.tracker.log_application(job["id"], job["title"], job["company"], "", job["url"], status="APPLIED")
             self.session_applied += 1
 
         except Exception as e:
-            self.log(f"  ❌ {e}", "ERROR")
+            self.log(f"  ❌ Application Error: {e}", "ERROR")
             self.tracker.log_application(job["id"], job["title"], job["company"], "", job["url"], status="FAILED", notes=str(e)[:100])
             self.session_failed += 1
         finally:
@@ -442,33 +426,37 @@ class NaukriBot:
                 pass
 
     # ══════════════════════════════════════════════════════════════════
-    # QUESTIONNAIRE / CHATBOT SOLVER
+    # CHATBOT + QUESTIONNAIRE SOLVER
     # ══════════════════════════════════════════════════════════════════
 
-    def _solve_all(self, page):
-        """Solve chatbot prompts + form overlays. Up to 15 rounds."""
+    def _solve_questionnaires_and_chatbot(self, page):
+        """Solves chatbot prompts & questionnaire forms iteratively."""
         resume = self.config.get("resume_path", "")
         for step in range(1, 16):
-            self.random_sleep(1, 2)
+            self.random_sleep(1.5, 2.5)
 
-            # Check success
+            # Check for application success
             for sel in [".applied-msg", ".success-title", ".congrats",
                         "div:has-text('Successfully Applied')", "div:has-text('Application Sent')"]:
                 try:
                     el = page.query_selector(sel)
                     if el and el.is_visible():
+                        self.log("    ✅ Application confirmation verified!", "SUCCESS")
                         return
                 except Exception:
                     pass
 
-            # Try chatbot first, then form overlay
-            if not self._chatbot(page):
-                if not self._form(page, resume):
-                    if step > 2:
-                        return
+            # 1. Chatbot input ("Type message here...")
+            if self._fill_chatbot(page):
+                continue
 
-    def _chatbot(self, page) -> bool:
-        """Handle the chatbot 'Type message here...' input."""
+            # 2. Form overlay modal
+            if not self._fill_form_overlay(page, resume):
+                if step > 2:
+                    return
+
+    def _fill_chatbot(self, page) -> bool:
+        """Find chatbot text input, extract question bubble, type answer, press Enter."""
         inp = None
         for sel in [
             "input[placeholder*='Type message']", "input[placeholder*='type message']",
@@ -489,7 +477,6 @@ class NaukriBot:
         if not inp:
             return False
 
-        # Read question
         qtext = ""
         try:
             for cs in ["div[class*='botContainer']", "div[class*='chatbot']", "div[class*='bot-body']",
@@ -501,9 +488,9 @@ class NaukriBot:
         except Exception:
             pass
 
-        self.log(f"    💬 Q: {qtext[:60].strip()}...")
+        self.log(f"    💬 Chatbot Question: '{qtext[:60].strip()}...'")
         answer = self.engine.answer(qtext)
-        self.log(f"    ✏️ A: {answer}")
+        self.log(f"    ✏️ Auto-filled Answer: '{answer}'")
 
         try:
             inp.click()
@@ -511,6 +498,7 @@ class NaukriBot:
             inp.fill(answer)
             time.sleep(0.3)
             inp.press("Enter")
+            self.log("    ➡️ Submitted via Enter key.")
         except Exception:
             try:
                 sb = page.query_selector("button:has-text('Send'), button[class*='send']")
@@ -521,8 +509,8 @@ class NaukriBot:
 
         return True
 
-    def _form(self, page, resume) -> bool:
-        """Handle form-based questionnaire overlays."""
+    def _fill_form_overlay(self, page, resume) -> bool:
+        """Handle modal overlay forms."""
         overlay = None
         for sel in [".botContainer", ".questionnaire-container", "div[role='dialog']",
                     ".drawer-wrapper", ".modal-content", "div[class*='drawer']",
@@ -544,14 +532,16 @@ class NaukriBot:
         except Exception:
             pass
 
-        # Fill inputs
+        # Text inputs
         for inp in overlay.query_selector_all("input[type='text'], input[type='number'], input[type='tel'], input:not([type]), textarea"):
             try:
                 if not inp.is_visible() or (inp.get_attribute("value") or "").strip():
                     continue
                 fctx = " ".join(filter(None, [inp.get_attribute("placeholder"), inp.get_attribute("name"),
                                                inp.get_attribute("id"), inp.get_attribute("aria-label"), ctx]))
-                inp.fill(self.engine.answer(fctx))
+                ans = self.engine.answer(fctx)
+                inp.fill(ans)
+                self.log(f"    ✏️ Filled Form Input: '{ans}'")
             except Exception:
                 pass
 
@@ -560,20 +550,22 @@ class NaukriBot:
             for fi in overlay.query_selector_all("input[type='file']"):
                 try:
                     fi.set_input_files(resume)
+                    self.log(f"    📎 Attached Resume: {os.path.basename(resume)}")
                 except Exception:
                     pass
 
-        # Radio/chips
+        # Radio & options
         for el in overlay.query_selector_all("label, .chip, .option, div[class*='chip'], div[class*='option']"):
             try:
                 t = (el.text_content() or "").strip()
                 if t and self.engine.should_select(t):
                     el.click()
+                    self.log(f"    🔘 Selected Option: '{t}'")
                     break
             except Exception:
                 pass
 
-        # Dropdowns
+        # Select dropdowns
         for se in overlay.query_selector_all("select"):
             try:
                 if not se.is_visible():
@@ -582,11 +574,12 @@ class NaukriBot:
                     t = (opt.text_content() or "").strip()
                     if self.engine.should_select(t):
                         se.select_option(value=opt.get_attribute("value"))
+                        self.log(f"    📋 Selected Dropdown Option: '{t}'")
                         break
             except Exception:
                 pass
 
-        # Submit
+        # Save/Submit/Next button
         for bs in ["button:has-text('Submit')", "button:has-text('Save')", "button:has-text('Apply')",
                     "button:has-text('Next')", "button:has-text('Continue')", "button:has-text('Proceed')",
                     "button.submit-btn", "button.btn-primary", "button[type='submit']", "input[type='submit']"]:
