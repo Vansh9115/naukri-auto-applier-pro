@@ -39,11 +39,12 @@ def handle_config():
 
 @app.route("/api/start", methods=["POST"])
 def start_bot():
-    global bot_instance, bot_thread
+    global bot_instance, bot_thread, log_buffer
     if bot_thread and bot_thread.is_alive():
         return jsonify({"status": "already_running"})
 
     cfg = load_config()
+    log_buffer = ["🚀 Starting new application session (counters reset to 0)..."]
     bot_instance = NaukriBot(cfg, log_callback=append_log)
 
     def _worker():
@@ -66,19 +67,38 @@ def stop_bot():
         return jsonify({"status": "stop_requested"})
     return jsonify({"status": "not_running"})
 
+@app.route("/api/google-login", methods=["POST"])
+def google_login():
+    def _worker():
+        cfg = load_config()
+        bot = NaukriBot(cfg, log_callback=append_log)
+        bot.ensure_google_login()
+    threading.Thread(target=_worker, daemon=True).start()
+    append_log("Opening Chrome window for Google Authentication...", "INFO")
+    return jsonify({"status": "opening_google_login"})
+
 @app.route("/api/status", methods=["GET"])
 def get_status():
-    tracker = JobTracker()
-    analytics = tracker.get_analytics_summary()
     is_running = bool(bot_thread and bot_thread.is_alive())
-    return jsonify({
-        "running": is_running,
-        "total": analytics["total"],
-        "applied": analytics["applied"],
-        "skipped": analytics["already_applied"],
-        "failed": analytics["failed"],
-        "logs": log_buffer[-25:]
-    })
+    
+    if bot_instance:
+        return jsonify({
+            "running": is_running,
+            "applied": bot_instance.session_applied,
+            "skipped": bot_instance.session_skipped,
+            "external": bot_instance.session_external,
+            "failed": bot_instance.session_failed,
+            "logs": log_buffer[-25:]
+        })
+    else:
+        return jsonify({
+            "running": is_running,
+            "applied": 0,
+            "skipped": 0,
+            "external": 0,
+            "failed": 0,
+            "logs": log_buffer[-25:]
+        })
 
 @app.route("/api/report")
 def get_report():

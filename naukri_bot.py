@@ -18,9 +18,13 @@ class NaukriBot:
     def __init__(self, config=None, log_callback=None):
         self.config = config or load_config()
         self.tracker = JobTracker(self.config.get("log_file", "applied_jobs.csv"))
-        self.applied_count = 0
-        self.skipped_count = 0
-        self.failed_count = 0
+        
+        # Session-specific counters (reset to 0 per session)
+        self.session_applied = 0
+        self.session_skipped = 0
+        self.session_failed = 0
+        self.session_external = 0
+        
         self.stop_requested = False
         self.log_callback = log_callback
         self.user_data_dir = os.path.abspath(self.config.get("chrome_user_data_dir", "./naukri_user_data"))
@@ -58,7 +62,6 @@ class NaukriBot:
         self.log("Stop requested by user. Finishing current operation...", "WARNING")
 
     def _create_browser_context(self, p, force_visible=False):
-        """ Creates browser context with automatic lock recovery & popup suppression """
         self._cleanup_stale_locks(self.user_data_dir)
         headless_mode = False if force_visible else self.config.get("headless", False)
         
@@ -96,8 +99,14 @@ class NaukriBot:
             return _launch(fallback_dir)
 
     def start(self):
+        # Reset session metrics to 0
+        self.session_applied = 0
+        self.session_skipped = 0
+        self.session_failed = 0
+        self.session_external = 0
         self.stop_requested = False
-        self.log("🚀 Starting Naukri Auto-Application Assistant...")
+        
+        self.log("🚀 Starting Naukri Auto-Application Session...")
         
         with sync_playwright() as p:
             context = self._create_browser_context(p, force_visible=True)
@@ -118,17 +127,42 @@ class NaukriBot:
                 if self.stop_requested:
                     self.log("Session stopped by user.", "WARNING")
                     break
-                if self.applied_count >= max_apps:
-                    self.log(f"Daily application target reached ({self.applied_count}/{max_apps}).", "SUCCESS")
+                if self.session_applied >= max_apps:
+                    self.log(f"Session application limit reached ({self.session_applied}/{max_apps}).", "SUCCESS")
                     break
                 self.log(f"\n🔍 Searching for keyword: '{keyword}'")
                 self.process_keyword(page, keyword)
 
-            self.log(f"\n🏁 Session summary: Applied: {self.applied_count} | Skipped: {self.skipped_count} | Failed: {self.failed_count}", "SUCCESS")
+            self.log(f"\n🏁 Session Summary: Applied: {self.session_applied} | Skipped: {self.session_skipped} | External Redirects: {self.session_external} | Failed: {self.session_failed}", "SUCCESS")
             try:
                 context.close()
             except Exception:
                 pass
+
+    def ensure_google_login(self):
+        """ Opens Chrome directly to Naukri Google OAuth sign-in """
+        self.log("Opening Chrome window for Google Authentication to Naukri...")
+        with sync_playwright() as p:
+            context = self._create_browser_context(p, force_visible=True)
+            page = context.pages[0] if context.pages else context.new_page()
+            page.goto("https://www.naukri.com/nlogin/login", wait_until="domcontentloaded")
+            self.random_sleep(2, 3)
+
+            # Click Google sign in button if available
+            try:
+                google_btn = page.query_selector("button:has-text('Google'), div[class*='google'], a[href*='google']")
+                if google_btn:
+                    google_btn.click()
+                    self.log("Clicked Google Sign In button.", "INFO")
+            except Exception:
+                pass
+
+            self.log("🌐 Chrome is open! Complete Google login in Chrome. Close Chrome when finished.", "SUCCESS")
+            while len(context.pages) > 0:
+                try:
+                    time.sleep(2)
+                except Exception:
+                    break
 
     def ensure_login_manual_only(self):
         self.log("Opening Chrome window for Naukri login setup...")
@@ -203,7 +237,7 @@ class NaukriBot:
             self.log("✅ Logged in successfully via credentials!", "SUCCESS")
             return True
 
-        self.log("👉 Please complete Login / OTP in the opened Chrome browser window.", "INFO")
+        self.log("👉 Please complete Login / Google Sign In / OTP in the opened Chrome browser window.", "INFO")
         self.log("Waiting for login completion (up to 3 minutes)...", "INFO")
 
         for i in range(60):
@@ -214,7 +248,7 @@ class NaukriBot:
                 self.log("✅ Login detected! Starting application process...", "SUCCESS")
                 return True
 
-        self.log("Login timeout. Please click 'Open Chrome & Log In To Naukri' in the app to log in manually.", "ERROR")
+        self.log("Login timeout. Please use Google Login or Manual Login in the app.", "ERROR")
         return False
 
     def process_keyword(self, page, keyword):
@@ -236,7 +270,7 @@ class NaukriBot:
         current_page_num = 1
         max_pages = 5
 
-        while current_page_num <= max_pages and self.applied_count < self.config.get("max_applications_per_run", 30):
+        while current_page_num <= max_pages and self.session_applied < self.config.get("max_applications_per_run", 30):
             if self.stop_requested:
                 break
                 
@@ -268,7 +302,7 @@ class NaukriBot:
                     card_applied = card.query_selector(".already-applied, span:has-text('Applied'), .applied-badge")
                     if card_applied or self.tracker.is_applied(job_id, url, title, company):
                         self.log(f"⏭ Skipping duplicate: {title} @ {company}", "INFO")
-                        self.skipped_count += 1
+                        self.session_skipped += 1
                         continue
                     
                     job_list.append({"id": job_id, "title": title, "company": company, "url": url})
@@ -276,7 +310,7 @@ class NaukriBot:
                     continue
 
             for job in job_list:
-                if self.stop_requested or self.applied_count >= self.config.get("max_applications_per_run", 30):
+                if self.stop_requested or self.session_applied >= self.config.get("max_applications_per_run", 30):
                     break
                 self.apply_to_job(page.context, job)
                 self.random_sleep()
@@ -308,19 +342,21 @@ class NaukriBot:
                 if already_applied:
                     self.log(f"ℹ️ Already applied previously on page.", "INFO")
                     self.tracker.log_application(job['id'], job['title'], job['company'], "", job['url'], status="ALREADY_APPLIED")
-                    self.skipped_count += 1
+                    self.session_skipped += 1
                 else:
                     self.log(f"⚠️ No Apply button found. Skipping.", "WARNING")
                     self.tracker.log_application(job['id'], job['title'], job['company'], "", job['url'], status="SKIPPED", notes="No button")
-                    self.skipped_count += 1
+                    self.session_skipped += 1
                 new_page.close()
                 return
 
             btn_text = apply_btn.text_content().strip()
-            if "company site" in btn_text.lower() or "external" in btn_text.lower():
-                self.log(f"ℹ️ External redirect job ({btn_text}). Logging as external.", "INFO")
+            
+            # STRICT REQUIREMENT: Skip jobs that redirect to company career portal / external site
+            if any(ext in btn_text.lower() for ext in ["company site", "company website", "external", "redirect"]):
+                self.log(f"⏭ Skipping company career portal redirect ({btn_text}).", "INFO")
                 self.tracker.log_application(job['id'], job['title'], job['company'], "", job['url'], status="EXTERNAL", notes=btn_text)
-                self.skipped_count += 1
+                self.session_external += 1
                 new_page.close()
                 return
 
@@ -333,16 +369,16 @@ class NaukriBot:
             if applied_success:
                 self.log(f"🎯 SUCCESS: Applied to {job['title']} at {job['company']}", "SUCCESS")
                 self.tracker.log_application(job['id'], job['title'], job['company'], "", job['url'], status="APPLIED")
-                self.applied_count += 1
+                self.session_applied += 1
             else:
                 self.log(f"⚠️ Application submitted with unverified status for {job['title']}", "WARNING")
                 self.tracker.log_application(job['id'], job['title'], job['company'], "", job['url'], status="APPLIED_UNVERIFIED")
-                self.applied_count += 1
+                self.session_applied += 1
 
         except Exception as e:
             self.log(f"❌ Application Error for {job['title']}: {e}", "ERROR")
             self.tracker.log_application(job['id'], job['title'], job['company'], "", job['url'], status="FAILED", notes=str(e)[:100])
-            self.failed_count += 1
+            self.session_failed += 1
         finally:
             try:
                 new_page.close()
@@ -351,8 +387,9 @@ class NaukriBot:
 
     def solve_application_questionnaires(self, page, job):
         """
-        Advanced Multi-Step Questionnaire & Form Solver.
-        Iteratively fills all experience prompts, options, text fields, and file uploads.
+        Advanced Multi-Step Questionnaire & Chatbot Solver.
+        Handles drawer popups, chatbot questions (e.g. 'How many years of experience do you have in X?'),
+        radio chips, and text inputs.
         """
         exp_years = self.config.get("experience_years", 4)
         curr_ctc = self.config.get("current_ctc_lpa", 4.0)
@@ -374,7 +411,7 @@ class NaukriBot:
                 return True
 
             overlay = page.query_selector(
-                ".botContainer, .questionnaire-container, div[role='dialog'], .drawer-wrapper, .modal-content, .chatbot-container"
+                ".botContainer, .questionnaire-container, div[role='dialog'], .drawer-wrapper, .modal-content, .chatbot-container, div[class*='drawer']"
             )
             
             if not overlay or not overlay.is_visible():
@@ -384,6 +421,16 @@ class NaukriBot:
                 continue
 
             self.log(f"  📋 Solving Questionnaire Step {step}...")
+
+            # Extract Chatbot Question Bubble Text if present (e.g. 'How many years of experience do you have in Switch Configuration?')
+            question_text = ""
+            try:
+                q_elem = overlay.query_selector("div[class*='msg'], div[class*='bubble'], div[class*='question'], .chat-message, div[class*='text']")
+                if q_elem:
+                    question_text = q_elem.text_content().lower().strip()
+                    self.log(f"    Chatbot Prompt Detected: '{question_text[:60]}...'")
+            except Exception:
+                pass
 
             # 1. Fill Experience & Text Inputs
             inputs = overlay.query_selector_all("input[type='text'], input[type='number'], input:not([type]), textarea")
@@ -395,6 +442,7 @@ class NaukriBot:
                     placeholder = (inp.get_attribute("placeholder") or "").lower()
                     name_attr = (inp.get_attribute("name") or "").lower()
                     id_attr = (inp.get_attribute("id") or "").lower()
+                    
                     label_text = ""
                     try:
                         parent = inp.evaluate_handle("node => node.closest('div, label, tr, td')")
@@ -402,32 +450,33 @@ class NaukriBot:
                     except Exception:
                         pass
                     
-                    context_str = f"{placeholder} {name_attr} {id_attr} {label_text}"
+                    context_str = f"{placeholder} {name_attr} {id_attr} {label_text} {question_text}"
 
-                    # Comprehensive Experience Field Matcher
+                    # Match Chatbot / Form Experience Questions
                     if any(k in context_str for k in [
-                        "exp", "year", "experience", "relevant", "total experience", 
-                        "industry experience", "domain experience", "duration", "how many years"
+                        "how many years", "years of experience", "experience in", "exp", "year", 
+                        "work experience", "relevant", "total experience", "industry experience", 
+                        "domain experience", "duration"
                     ]):
                         inp.fill(str(exp_years))
-                        self.log(f"    Filled Work Experience: {exp_years} Years")
+                        self.log(f"    Auto-filled Experience: {exp_years} Years")
                     elif any(k in context_str for k in ["current ctc", "present ctc", "current salary", "present salary"]):
                         inp.fill(str(curr_ctc))
-                        self.log(f"    Filled Current CTC: {curr_ctc} LPA")
+                        self.log(f"    Auto-filled Current CTC: {curr_ctc} LPA")
                     elif any(k in context_str for k in ["expected ctc", "expected salary"]):
                         inp.fill(str(exp_ctc))
-                        self.log(f"    Filled Expected CTC: {exp_ctc} LPA")
+                        self.log(f"    Auto-filled Expected CTC: {exp_ctc} LPA")
                     elif any(k in context_str for k in ["notice", "days"]):
                         inp.fill(str(notice_days))
-                        self.log(f"    Filled Notice Period: {notice_days} Days")
+                        self.log(f"    Auto-filled Notice Period: {notice_days} Days")
                     elif any(k in context_str for k in ["location", "city", "current location"]):
                         loc_val = target_locations[0] if target_locations else "Bangalore"
                         inp.fill(loc_val)
-                        self.log(f"    Filled Location: {loc_val}")
+                        self.log(f"    Auto-filled Location: {loc_val}")
                     else:
-                        smart_ans = f"I have {exp_years} years of total work experience in Operations Management, Finance, and AML compliance."
+                        smart_ans = str(exp_years) if ("experience" in context_str or "years" in context_str) else f"I have {exp_years} years of work experience in this field."
                         inp.fill(smart_ans)
-                        self.log(f"    Filled Custom Field: '{smart_ans[:45]}...'")
+                        self.log(f"    Auto-filled Smart Field: '{smart_ans}'")
                 except Exception:
                     pass
 
@@ -442,28 +491,24 @@ class NaukriBot:
                         pass
 
             # 3. Radio Buttons & Experience Option Chips
-            radio_labels = overlay.query_selector_all("label, .chip, .option, span.radio-label, div.radio-option, button.option")
+            radio_labels = overlay.query_selector_all("label, .chip, .option, span.radio-label, div.radio-option, button.option, div[class*='chip']")
             for rlbl in radio_labels:
                 try:
                     txt = rlbl.text_content().strip()
                     txt_lower = txt.lower()
 
-                    # Match Experience options (e.g. '4 Years', '3-5 Yrs')
                     if any(e in txt_lower for e in [f"{exp_years} year", f"{exp_years} yr", "3-5", "4-5", "3-6", "4-6"]):
                         rlbl.click()
                         self.log(f"    Selected Experience Option: '{txt}'")
                         break
-                    # Match Notice Period options
                     elif any(n in txt_lower for n in ["15 days", "15 days or less", "immediate", "serving notice"]):
                         rlbl.click()
                         self.log(f"    Selected Notice Option: '{txt}'")
                         break
-                    # Match Relocation / Yes-No options
                     elif relocate and any(y in txt_lower for y in ["yes", "ready to relocate", "willing to relocate"]):
                         rlbl.click()
-                        self.log(f"    Selected Option: '{txt}'")
+                        self.log(f"    Selected Relocation Option: '{txt}'")
                         break
-                    # Match Location options
                     elif any(loc.lower() in txt_lower for loc in target_locations):
                         rlbl.click()
                         self.log(f"    Selected Location Option: '{txt}'")
@@ -471,9 +516,9 @@ class NaukriBot:
                 except Exception:
                     pass
 
-            # 4. Click Submit / Next / Continue button
+            # 4. Click Submit / Save / Next / Continue button
             submit_btn = overlay.query_selector(
-                "button:has-text('Submit'), button:has-text('Save'), button:has-text('Next'), button:has-text('Continue'), button:has-text('Save & Apply'), button.submit-btn, input[type='submit']"
+                "button:has-text('Save'), button:has-text('Submit'), button:has-text('Next'), button:has-text('Continue'), button:has-text('Save & Apply'), button.submit-btn, input[type='submit']"
             )
             
             if submit_btn and submit_btn.is_visible():
