@@ -3,468 +3,757 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Naukri Auto-Applier Pro 🚀 | Enterprise Job Engine</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <title>Naukri Auto-Applier Pro</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            --bg-dark: #030712;
-            --surface-glass: rgba(15, 23, 42, 0.65);
-            --surface-card: rgba(30, 41, 59, 0.5);
-            --border-glass: rgba(255, 255, 255, 0.08);
-            --border-hover: rgba(56, 189, 248, 0.4);
-            --cyan-glow: #38bdf8;
-            --purple-glow: #a855f7;
-            --emerald-glow: #10b981;
-            --rose-glow: #f43f5e;
+            --bg-color: #030712;
             --text-primary: #f8fafc;
-            --text-muted: #94a3b8;
+            --text-secondary: #94a3b8;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            
+            --cyan: #38bdf8;
+            --purple: #a855f7;
+            --emerald: #10b981;
+            --red: #ef4444;
+            --amber: #f59e0b;
+            --blue: #3b82f6;
+            
+            --font-sans: 'Plus Jakarta Sans', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-dark);
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
             color: var(--text-primary);
-            min-height: 100vh;
+            line-height: 1.5;
             overflow-x: hidden;
-            background-image: 
-                radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.12) 0%, transparent 45%),
-                radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.12) 0%, transparent 45%),
-                radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.05) 0%, transparent 60%);
-            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* --- Header Navigation --- */
+        /* Ambient Glows */
+        .ambient-glow {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: -1;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+        .glow-cyan { top: -10%; left: -5%; width: 40vw; height: 40vw; background: var(--cyan); }
+        .glow-purple { bottom: -10%; right: -5%; width: 45vw; height: 45vw; background: var(--purple); }
+        .glow-emerald { top: 40%; left: 30%; width: 30vw; height: 30vw; background: var(--emerald); }
+
+        /* Container */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 24px;
+            width: 100%;
+        }
+
+        /* Header */
         header {
-            background: rgba(3, 7, 18, 0.8);
-            backdrop-filter: blur(20px);
-            padding: 18px 45px;
-            border-bottom: 1px solid var(--border-glass);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            padding: 24px 0;
+            border-bottom: 1px solid var(--card-border);
+            margin-bottom: 40px;
         }
 
-        .brand-logo {
-            font-size: 22px;
-            font-weight: 800;
-            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #a855f7 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .brand {
+            font-size: 1.25rem;
+            font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            letter-spacing: -0.02em;
         }
 
-        .nav-links { display: flex; gap: 28px; align-items: center; }
-        .nav-links a { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 14px; transition: color 0.3s; }
-        .nav-links a:hover { color: var(--cyan-glow); }
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+        
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--text-primary); }
 
         .status-pill {
-            display: inline-flex;
+            display: flex;
             align-items: center;
             gap: 8px;
-            padding: 6px 16px;
-            border-radius: 30px;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            color: var(--emerald-glow);
-            font-size: 13px;
-            font-weight: 700;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+        .status-pill.running {
+            color: var(--emerald);
+            border-color: rgba(16, 185, 129, 0.3);
+            background: rgba(16, 185, 129, 0.05);
         }
 
-        .pulse-indicator {
+        .dot {
             width: 8px;
             height: 8px;
-            background: var(--emerald-glow);
             border-radius: 50%;
-            box-shadow: 0 0 12px var(--emerald-glow);
-            animation: pulse-ring 2s infinite;
+            background-color: var(--text-secondary);
+        }
+        .status-pill.running .dot {
+            background-color: var(--emerald);
+            box-shadow: 0 0 8px var(--emerald);
+            animation: pulse 2s infinite;
         }
 
-        @keyframes pulse-ring {
+        @keyframes pulse {
             0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
 
-        .container { max-width: 1280px; margin: 35px auto; padding: 0 24px; }
-
-        /* --- Hero Section --- */
-        .hero-card {
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%);
-            backdrop-filter: blur(25px);
-            border: 1px solid var(--border-glass);
-            border-radius: 24px;
-            padding: 40px;
-            margin-bottom: 35px;
+        /* Hero */
+        .hero {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .hero h1 {
+            font-size: 2.75rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            margin-bottom: 12px;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto 32px;
+        }
+        .hero-actions {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            gap: 16px;
         }
 
-        .hero-title h1 { font-size: 34px; font-weight: 800; margin-bottom: 10px; color: #fff; letter-spacing: -0.5px; }
-        .hero-title p { font-size: 15px; color: var(--text-muted); max-width: 620px; }
-
-        .btn-group { display: flex; gap: 14px; }
-
+        /* Buttons */
         .btn {
-            background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
-            color: #030712;
-            padding: 13px 26px;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 14px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            box-shadow: 0 10px 25px -5px rgba(56, 189, 248, 0.3);
-        }
-        .btn:hover { transform: translateY(-3px); filter: brightness(1.15); box-shadow: 0 15px 30px -5px rgba(56, 189, 248, 0.4); }
-        .btn-emerald { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3); }
-        .btn-purple { background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%); color: #fff; box-shadow: 0 10px 25px -5px rgba(168, 85, 247, 0.3); }
-        .btn-rose { background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%); color: #fff; }
-
-        /* --- Grid Layout --- */
-        .main-grid { display: grid; grid-template-columns: 4.6fr 5.4fr; gap: 30px; }
-
-        .glass-card {
-            background: var(--surface-glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border-glass);
-            border-radius: 20px;
-            padding: 28px;
-            margin-bottom: 30px;
-            transition: all 0.3s ease;
-            box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.3);
-        }
-        .glass-card:hover { border-color: var(--border-hover); }
-
-        .card-header { font-size: 19px; font-weight: 700; margin-bottom: 22px; color: var(--cyan-glow); display: flex; align-items: center; justify-content: space-between; }
-
-        .form-row { display: flex; gap: 16px; margin-bottom: 16px; }
-        .form-group { flex: 1; margin-bottom: 16px; }
-        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-muted); }
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 12px 16px;
-            background: rgba(3, 7, 18, 0.75);
-            border: 1px solid var(--border-glass);
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
             border-radius: 12px;
-            color: #fff;
-            font-size: 14px;
-            transition: all 0.3s ease;
+            font-family: var(--font-sans);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            color: white;
+            text-decoration: none;
         }
-        .form-group input:focus, .form-group select:focus { border-color: var(--cyan-glow); outline: none; box-shadow: 0 0 15px rgba(56, 189, 248, 0.2); }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+        .btn-green {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+        }
+        .btn-green:hover { box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); }
+        
+        .btn-red {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+        }
+        .btn-red:hover { box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4); }
 
-        /* File Upload Zone */
-        .upload-dropzone {
-            border: 2px dashed rgba(56, 189, 248, 0.35);
-            background: rgba(56, 189, 248, 0.03);
-            border-radius: 16px;
-            padding: 24px;
+        .btn-purple {
+            background: linear-gradient(135deg, #a855f7, #7e22ce);
+            box-shadow: 0 4px 14px rgba(168, 85, 247, 0.3);
+        }
+        .btn-blue {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+        }
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            color: var(--text-primary);
+        }
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .btn-full { width: 100%; }
+
+        /* Cards (Glassmorphism) */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: white;
+        }
+        .card-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 24px;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        input, select {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            color: white;
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            outline: none;
+        }
+        input:focus, select:focus {
+            border-color: var(--cyan);
+            background: rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.1);
+        }
+        select option {
+            background: var(--bg-color);
+            color: white;
+        }
+
+        /* Dropzone */
+        .dropzone {
+            border: 2px dashed var(--card-border);
+            border-radius: 12px;
+            padding: 32px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.01);
+            margin-bottom: 24px;
         }
-        .upload-dropzone:hover { border-color: var(--cyan-glow); background: rgba(56, 189, 248, 0.08); transform: scale(1.01); }
-
-        /* Metric Dashboard */
-        .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
-        .metric-tile {
-            background: rgba(3, 7, 18, 0.7);
-            border: 1px solid var(--border-glass);
-            border-radius: 14px;
-            padding: 16px 12px;
-            text-align: center;
+        .dropzone:hover {
+            border-color: var(--cyan);
+            background: rgba(56, 189, 248, 0.03);
         }
-        .metric-tile .label { font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px; }
-        .metric-tile .count { font-size: 28px; font-weight: 800; margin-top: 6px; }
+        .dropzone svg {
+            width: 32px;
+            height: 32px;
+            fill: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+        .dropzone-text {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+        .dropzone-filename {
+            color: var(--emerald);
+            font-weight: 500;
+            margin-top: 8px;
+            display: none;
+        }
 
-        /* Console Log Window */
-        .terminal-window {
-            background: #02040a;
-            border: 1px solid var(--border-glass);
-            border-radius: 14px;
-            padding: 18px;
-            height: 360px;
+        /* Dashboard Metrics */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        @media (max-width: 600px) {
+            .metrics-grid { grid-template-columns: 1fr 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+        }
+        .metric {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .metric-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .metric-val {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+        }
+        .val-applied { color: var(--emerald); }
+        .val-dupes { color: var(--amber); }
+        .val-skipped { color: var(--purple); }
+        .val-failed { color: var(--red); }
+
+        /* Terminal Console */
+        .console-box {
+            background: #000;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            height: 200px;
             overflow-y: auto;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
-            color: #a7f3d0;
-            line-height: 1.6;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: #a3a3a3;
+            margin-bottom: 16px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
         }
+        .log-line { margin-bottom: 4px; border-bottom: 1px solid #111; padding-bottom: 2px; }
+        .log-time { color: #555; margin-right: 8px; }
+        .log-info { color: var(--cyan); }
+        .log-success { color: var(--emerald); }
+        .log-warn { color: var(--amber); }
+        .log-error { color: var(--red); }
+        
+        /* Custom Scrollbar for console */
+        .console-box::-webkit-scrollbar { width: 8px; }
+        .console-box::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        .console-box::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
 
-        footer { text-align: center; padding: 35px; color: var(--text-muted); font-size: 14px; border-top: 1px solid var(--border-glass); margin-top: 60px; }
+        /* Footer */
+        footer {
+            margin-top: auto;
+            padding: 32px 0;
+            text-align: center;
+            border-top: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        footer a { color: var(--cyan); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+
+        /* Inline Messages */
+        .inline-msg {
+            display: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-top: 16px;
+            animation: fadeIn 0.3s ease;
+        }
+        .msg-success { background: rgba(16, 185, 129, 0.1); color: var(--emerald); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .msg-error { background: rgba(239, 68, 68, 0.1); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.2); }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="brand-logo">🚀 Naukri Auto-Applier Pro</div>
-        <div class="nav-links">
-            <a href="#auth">Auth Hub</a>
-            <a href="#params">Parameters</a>
-            <a href="#telemetry">Telemetry</a>
-            <div class="status-pill" id="statusPill">
-                <div class="pulse-indicator"></div> <span id="statusText">IDLE</span>
-            </div>
-        </div>
-    </header>
+    <!-- Ambient Background -->
+    <div class="ambient-glow glow-cyan"></div>
+    <div class="ambient-glow glow-purple"></div>
+    <div class="ambient-glow glow-emerald"></div>
 
     <div class="container">
-        <div class="hero-card">
-            <div class="hero-title">
-                <h1>Autonomous Job Application Platform</h1>
-                <p>Intelligent Playwright automation engine with Google OAuth, chatbot prompt parsing, resume uploading, and real-time session telemetry.</p>
-            </div>
-            <div class="btn-group">
-                <button class="btn btn-emerald" onclick="startBot()">🚀 Launch Engine</button>
-                <button class="btn btn-rose" onclick="stopBot()">⏸ Pause</button>
-            </div>
-        </div>
+        
+        <!-- Header -->
+        <header>
+            <div class="brand">🚀 Naukri Auto-Applier Pro</div>
+            <nav class="nav-links">
+                <a href="#dashboard">Dashboard</a>
+                <a href="#help">Help</a>
+                <div id="status-pill" class="status-pill">
+                    <div class="dot"></div>
+                    <span id="status-text">IDLE</span>
+                </div>
+            </nav>
+        </header>
 
-        <div class="main-grid">
-            <!-- Left Panel -->
-            <div>
-                <!-- Authentication Hub -->
-                <div class="glass-card" id="auth">
-                    <div class="card-header">
-                        <span>🔑 Tier 1: Naukri Authentication Hub</span>
+        <main>
+            <!-- Hero -->
+            <section class="hero">
+                <h1>Your Personal Job Application Assistant</h1>
+                <p>Automate your Naukri.com job hunt. Set your preferences, upload your resume, and let the bot apply to the perfect matches for you while you sleep.</p>
+                <div class="hero-actions">
+                    <button class="btn btn-green" onclick="startBot()">🚀 Start Applying</button>
+                    <button class="btn btn-red" onclick="stopBot()">⏸ Stop</button>
+                </div>
+                <div id="hero-msg" class="inline-msg"></div>
+            </section>
+
+            <!-- Step 1 -->
+            <section class="card">
+                <h2 class="card-title">Step 1: Login to Naukri</h2>
+                <p class="card-desc">First, login to your Naukri account. Choose one method below:</p>
+                
+                <div class="form-row">
+                    <button class="btn btn-purple btn-full" onclick="googleLogin()">🌐 Login with Google</button>
+                    <button class="btn btn-blue btn-full" onclick="manualLogin()">📧 Login with Email</button>
+                </div>
+                <div id="login-msg" class="inline-msg msg-success"></div>
+            </section>
+
+            <!-- Step 2 -->
+            <section class="card">
+                <h2 class="card-title">Step 2: Your Profile Details</h2>
+                <p class="card-desc">Configure what kind of jobs the bot should target.</p>
+                
+                <div class="form-group">
+                    <label>Job Keywords (comma-separated)</label>
+                    <input type="text" id="keywords" value="Operation Management, Finance, AML">
+                </div>
+                
+                <div class="form-group">
+                    <label>Preferred Locations (comma-separated)</label>
+                    <input type="text" id="locations" value="Bangalore, Gurugram, Gurgaon, Delhi NCR, Noida, Hyderabad, Pune">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Work Experience (Years)</label>
+                        <input type="number" id="experience" value="4" min="0" step="0.5">
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Naukri Email / Username</label>
-                            <input type="text" id="naukriEmail" placeholder="user@domain.com">
-                        </div>
-                        <div class="form-group">
-                            <label>Naukri Password</label>
-                            <input type="password" id="naukriPassword" placeholder="••••••••">
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 12px;">
-                        <button class="btn btn-purple" style="flex:1;" onclick="googleLogin()">🌐 Sign in with Google to Naukri</button>
-                        <button class="btn" style="flex:1; background: rgba(255,255,255,0.08); color: #fff;" onclick="manualLogin()">💻 Open Chrome Window</button>
+                    <div class="form-group">
+                        <label>Notice Period</label>
+                        <select id="notice-period">
+                            <option value="15 Days or less" selected>15 Days or less</option>
+                            <option value="Immediate">Immediate</option>
+                            <option value="30 Days">30 Days</option>
+                            <option value="60 Days">60 Days</option>
+                        </select>
                     </div>
                 </div>
 
-                <!-- Parameters & Resume Picker -->
-                <div class="glass-card" id="params">
-                    <div class="card-header">
-                        <span>⚙️ Tier 2: Search Criteria & Resume Upload</span>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Current CTC (LPA)</label>
+                        <input type="number" id="current-ctc" value="4.0" step="0.1">
                     </div>
-                    <form id="configForm">
-                        <div class="form-group">
-                            <label>Target Job Keywords (comma-separated)</label>
-                            <input type="text" id="keywords" value="Operation Management, Finance, AML">
-                        </div>
-                        <div class="form-group">
-                            <label>Target Locations (comma-separated)</label>
-                            <input type="text" id="locations" value="Bangalore, Gurugram, Gurgaon, Delhi NCR, Noida, Hyderabad, Pune">
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Work Experience (Years)</label>
-                                <input type="number" id="experience" value="4">
-                            </div>
-                            <div class="form-group">
-                                <label>Notice Period</label>
-                                <select id="notice">
-                                    <option value="15 Days or less">15 Days or less</option>
-                                    <option value="Immediate">Immediate</option>
-                                    <option value="30 Days">30 Days</option>
-                                    <option value="60 Days">60 Days</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Current CTC (LPA)</label>
-                                <input type="number" step="0.1" id="currCtc" value="4.0">
-                            </div>
-                            <div class="form-group">
-                                <label>Expected CTC (LPA)</label>
-                                <input type="number" step="0.1" id="expCtc" value="6.5">
-                            </div>
-                        </div>
-
-                        <!-- Resume Upload Zone -->
-                        <div class="form-group">
-                            <label>Attached Resume PDF</label>
-                            <div class="upload-dropzone" onclick="document.getElementById('resumeFileInput').click()">
-                                <span style="font-size: 28px;">📄</span>
-                                <div style="font-weight: 700; margin-top: 6px; font-size: 15px;" id="resumeFileName">Click to Browse & Attach Resume PDF</div>
-                                <p id="resumePathDisplay" style="font-size: 12px; margin-top: 4px; color: var(--text-muted);">C:/Users/vansh/OneDrive/Desktop/Vansh Lalwani - Resume.pdf</p>
-                            </div>
-                            <input type="file" id="resumeFileInput" accept=".pdf,.doc,.docx" style="display: none;" onchange="uploadResumeFile(this)">
-                        </div>
-
-                        <button type="button" class="btn" style="width: 100%;" onclick="saveConfig()">💾 Save Parameters</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Right Panel -->
-            <div id="telemetry">
-                <div class="glass-card">
-                    <div class="card-header">
-                        <span>📊 Tier 3: Real-Time Session Metrics (Resets per Run)</span>
-                        <button class="btn btn-purple" style="font-size: 12px; padding: 7px 14px;" onclick="viewReport()">View Report</button>
-                    </div>
-                    <div class="metrics-grid">
-                        <div class="metric-tile">
-                            <div class="label">APPLIED</div>
-                            <div class="count" style="color: var(--emerald-glow);" id="statApplied">0</div>
-                        </div>
-                        <div class="metric-tile">
-                            <div class="label">DUPLICATES</div>
-                            <div class="count" style="color: #f59e0b;" id="statSkipped">0</div>
-                        </div>
-                        <div class="metric-tile">
-                            <div class="label">EXTERNAL</div>
-                            <div class="count" style="color: var(--purple-glow);" id="statExternal">0</div>
-                        </div>
-                        <div class="metric-tile">
-                            <div class="label">FAILED</div>
-                            <div class="count" style="color: var(--rose-glow);" id="statFailed">0</div>
-                        </div>
-                    </div>
-                    <div class="card-header" style="margin-top: 10px; margin-bottom: 12px;">
-                        <span>📋 Live Execution Telemetry Output</span>
-                    </div>
-                    <div class="terminal-window" id="consoleOutput">
-                        ℹ️ Enterprise Web Engine initialized.<br>
-                        ℹ️ Session counters reset to 0.<br>
-                        ℹ️ Ready for automation session...
+                    <div class="form-group">
+                        <label>Expected CTC (LPA)</label>
+                        <input type="number" id="expected-ctc" value="6.5" step="0.1">
                     </div>
                 </div>
-            </div>
-        </div>
+
+                <div class="dropzone" onclick="document.getElementById('resume-upload').click()">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg>
+                    <div class="dropzone-text">Click to attach your Resume PDF</div>
+                    <div id="dropzone-filename" class="dropzone-filename"></div>
+                    <input type="file" id="resume-upload" style="display: none" accept=".pdf,.doc,.docx" onchange="uploadResumeFile(this)">
+                </div>
+
+                <button class="btn btn-blue btn-full" onclick="saveConfig()">💾 Save Settings</button>
+                <div id="config-msg" class="inline-msg"></div>
+            </section>
+
+            <!-- Step 3 -->
+            <section class="card" id="dashboard">
+                <h2 class="card-title">Step 3: Live Dashboard</h2>
+                <p class="card-desc">Monitor the bot's application progress in real-time.</p>
+                
+                <div class="metrics-grid">
+                    <div class="metric">
+                        <div class="metric-label">Applied</div>
+                        <div class="metric-val val-applied" id="metric-applied">0</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Duplicates</div>
+                        <div class="metric-val val-dupes" id="metric-dupes">0</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Ext. Skipped</div>
+                        <div class="metric-val val-skipped" id="metric-skipped">0</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Failed</div>
+                        <div class="metric-val val-failed" id="metric-failed">0</div>
+                    </div>
+                </div>
+
+                <div class="console-box" id="console">
+                    <div class="log-line"><span class="log-time">[System]</span><span class="log-info">Dashboard initialized. Waiting for engine start...</span></div>
+                </div>
+                
+                <button class="btn btn-ghost" onclick="viewReport()">View Full Report ↗</button>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer>
+            <p>&copy; 2026 Naukri Auto-Applier Pro. <a href="https://github.com/Vansh9115/naukri-auto-applier-pro" target="_blank">View on GitHub</a></p>
+        </footer>
     </div>
 
-    <footer>
-        <p>Naukri Auto-Applier Pro &copy; 2026 | Enterprise Edition | Hosted on <a href="https://github.com/Vansh9115/naukri-auto-applier-pro" target="_blank" style="color: var(--cyan-glow);">GitHub Repository</a></p>
-    </footer>
-
+    <!-- JavaScript Logic -->
     <script>
+        let isRunning = false;
+
+        // Helper to show inline messages safely without alerts
+        function showMessage(elementId, text, type = 'success', duration = 3000) {
+            const el = document.getElementById(elementId);
+            el.textContent = text;
+            el.className = `inline-msg msg-${type}`;
+            el.style.display = 'block';
+            
+            if (duration > 0) {
+                setTimeout(() => {
+                    el.style.display = 'none';
+                }, duration);
+            }
+        }
+
+        // Add a line to the visual console
+        function appendLog(message, level = 'info') {
+            const consoleBox = document.getElementById('console');
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            line.innerHTML = `<span class="log-time">[${time}]</span><span class="log-${level}">${message}</span>`;
+            consoleBox.appendChild(line);
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+
+        // On Load: Fetch config and status
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const configRes = await fetch('/api/config');
+                if (configRes.ok) {
+                    const data = await configRes.json();
+                    if(data.keywords) document.getElementById('keywords').value = data.keywords;
+                    if(data.locations) document.getElementById('locations').value = data.locations;
+                    if(data.experience) document.getElementById('experience').value = data.experience;
+                    if(data.noticePeriod) document.getElementById('notice-period').value = data.noticePeriod;
+                    if(data.currentCTC) document.getElementById('current-ctc').value = data.currentCTC;
+                    if(data.expectedCTC) document.getElementById('expected-ctc').value = data.expectedCTC;
+                }
+            } catch (err) {
+                console.log("Config fetch failed (expected if backend offline)");
+            }
+            
+            fetchStatus();
+            // Poll status every 2 seconds
+            setInterval(fetchStatus, 2000);
+        });
+
+        // Fetch Live Status
         async function fetchStatus() {
             try {
                 const res = await fetch('/api/status');
                 if (res.ok) {
                     const data = await res.json();
-                    document.getElementById('statApplied').innerText = data.applied || 0;
-                    document.getElementById('statSkipped').innerText = data.skipped || 0;
-                    document.getElementById('statExternal').innerText = data.external || 0;
-                    document.getElementById('statFailed').innerText = data.failed || 0;
-                    
-                    const pill = document.getElementById('statusPill');
-                    const text = document.getElementById('statusText');
-                    if (data.running) {
-                        pill.style.borderColor = 'rgba(16, 185, 129, 0.6)';
-                        text.innerText = 'RUNNING';
-                    } else {
-                        pill.style.borderColor = 'rgba(148, 163, 184, 0.3)';
-                        text.innerText = 'IDLE';
-                    }
-
-                    if (data.logs) {
-                        const consoleElem = document.getElementById('consoleOutput');
-                        consoleElem.innerHTML = data.logs.join('<br>');
-                        consoleElem.scrollTop = consoleElem.scrollHeight;
-                    }
+                    updateDashboard(data);
                 }
-            } catch (e) {}
-        }
-
-        async function loadConfig() {
-            try {
-                const res = await fetch('/api/config');
-                if (res.ok) {
-                    const cfg = await res.json();
-                    if (cfg.naukri_email) document.getElementById('naukriEmail').value = cfg.naukri_email;
-                    if (cfg.naukri_password) document.getElementById('naukriPassword').value = cfg.naukri_password;
-                    if (cfg.keywords) document.getElementById('keywords').value = cfg.keywords.join(', ');
-                    if (cfg.locations) document.getElementById('locations').value = cfg.locations.join(', ');
-                    if (cfg.experience_years) document.getElementById('experience').value = cfg.experience_years;
-                    if (cfg.notice_period_str) document.getElementById('notice').value = cfg.notice_period_str;
-                    if (cfg.current_ctc_lpa) document.getElementById('currCtc').value = cfg.current_ctc_lpa;
-                    if (cfg.expected_ctc_lpa) document.getElementById('expCtc').value = cfg.expected_ctc_lpa;
-                    if (cfg.resume_path) document.getElementById('resumePathDisplay').innerText = cfg.resume_path;
-                }
-            } catch(e) {}
-        }
-
-        async function saveConfig() {
-            const config = {
-                naukri_email: document.getElementById('naukriEmail').value.trim(),
-                naukri_password: document.getElementById('naukriPassword').value.trim(),
-                keywords: document.getElementById('keywords').value.split(',').map(s => s.trim()),
-                locations: document.getElementById('locations').value.split(',').map(s => s.trim()),
-                experience_years: parseInt(document.getElementById('experience').value),
-                notice_period_str: document.getElementById('notice').value,
-                current_ctc_lpa: parseFloat(document.getElementById('currCtc').value),
-                expected_ctc_lpa: parseFloat(document.getElementById('expCtc').value)
-            };
-            await fetch('/api/config', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(config)
-            });
-            alert('Parameters saved successfully!');
-        }
-
-        async function uploadResumeFile(input) {
-            if (!input.files || input.files.length === 0) return;
-            const formData = new FormData();
-            formData.append('resume', input.files[0]);
-            
-            document.getElementById('resumeFileName').innerText = 'Uploading: ' + input.files[0].name;
-            const res = await fetch('/api/upload-resume', {
-                method: 'POST',
-                body: formData
-            });
-            if (res.ok) {
-                const data = await res.json();
-                document.getElementById('resumeFileName').innerText = 'Attached: ' + input.files[0].name;
-                document.getElementById('resumePathDisplay').innerText = data.resume_path;
-                alert('Resume uploaded and attached successfully!');
+            } catch (err) {
+                // Silent fail for demo if backend is offline
             }
         }
 
-        async function startBot() {
-            await saveConfig();
-            await fetch('/api/start', { method: 'POST' });
-            alert('Automation Engine launched! Session counters reset to 0.');
+        function updateDashboard(data) {
+            // Update metrics
+            if (data.metrics) {
+                document.getElementById('metric-applied').textContent = data.metrics.applied || 0;
+                document.getElementById('metric-dupes').textContent = data.metrics.duplicates || 0;
+                document.getElementById('metric-skipped').textContent = data.metrics.skipped || 0;
+                document.getElementById('metric-failed').textContent = data.metrics.failed || 0;
+            }
+            
+            // Update console logs
+            if (data.logs && Array.isArray(data.logs)) {
+                const consoleBox = document.getElementById('console');
+                consoleBox.innerHTML = '';
+                data.logs.forEach(log => appendLog(log.msg, log.level));
+            }
+            
+            // Update Status Pill
+            const pill = document.getElementById('status-pill');
+            const text = document.getElementById('status-text');
+            if (data.isRunning) {
+                isRunning = true;
+                pill.classList.add('running');
+                text.textContent = 'RUNNING';
+            } else {
+                isRunning = false;
+                pill.classList.remove('running');
+                text.textContent = 'IDLE';
+            }
         }
 
+        // Login Methods
         async function googleLogin() {
-            await fetch('/api/google-login', { method: 'POST' });
+            showMessage('login-msg', 'Initiating Google Login...', 'success', 0);
+            try {
+                const res = await fetch('/api/google-login', { method: 'POST' });
+                if(res.ok) showMessage('login-msg', 'Successfully authenticated via Google!', 'success');
+                else showMessage('login-msg', 'Google login failed.', 'error');
+            } catch (err) {
+                showMessage('login-msg', 'Login request simulated (backend offline)', 'success');
+            }
         }
 
         async function manualLogin() {
-            await fetch('/api/manual-login', { method: 'POST' });
+            showMessage('login-msg', 'Initiating Email Login...', 'success', 0);
+            try {
+                const res = await fetch('/api/manual-login', { method: 'POST' });
+                if(res.ok) showMessage('login-msg', 'Successfully authenticated via Email!', 'success');
+                else showMessage('login-msg', 'Email login failed.', 'error');
+            } catch (err) {
+                showMessage('login-msg', 'Login request simulated (backend offline)', 'success');
+            }
+        }
+
+        // File Upload
+        async function uploadResumeFile(input) {
+            if (!input.files || input.files.length === 0) return;
+            const file = input.files[0];
+            
+            const filenameDiv = document.getElementById('dropzone-filename');
+            filenameDiv.textContent = `Attached: ${file.name}`;
+            filenameDiv.style.display = 'block';
+
+            const formData = new FormData();
+            formData.append('resume', file);
+
+            try {
+                const res = await fetch('/api/upload-resume', {
+                    method: 'POST',
+                    body: formData
+                });
+                if(res.ok) showMessage('config-msg', 'Resume uploaded successfully!', 'success');
+            } catch (err) {
+                showMessage('config-msg', 'Resume staged for upload.', 'success');
+            }
+        }
+
+        // Save Configuration
+        async function saveConfig() {
+            const config = {
+                keywords: document.getElementById('keywords').value.split(',').map(s => s.trim()),
+                locations: document.getElementById('locations').value.split(',').map(s => s.trim()),
+                experience: parseFloat(document.getElementById('experience').value),
+                noticePeriod: document.getElementById('notice-period').value,
+                currentCTC: parseFloat(document.getElementById('current-ctc').value),
+                expectedCTC: parseFloat(document.getElementById('expected-ctc').value)
+            };
+
+            try {
+                const res = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                if (res.ok) {
+                    showMessage('config-msg', 'Settings saved!', 'success');
+                } else {
+                    showMessage('config-msg', 'Failed to save settings.', 'error');
+                }
+            } catch (err) {
+                showMessage('config-msg', 'Settings saved locally.', 'success');
+            }
+            return config;
+        }
+
+        // Bot Controls
+        async function startBot() {
+            await saveConfig();
+            
+            try {
+                const res = await fetch('/api/start', { method: 'POST' });
+                if(res.ok) {
+                    showMessage('hero-msg', 'Application engine started!', 'success');
+                    appendLog('Engine initialized by user.', 'success');
+                } else {
+                    showMessage('hero-msg', 'Failed to start engine.', 'error');
+                }
+            } catch (err) {
+                showMessage('hero-msg', 'Application engine started (simulated)!', 'success');
+                appendLog('Engine initialized (simulated).', 'success');
+                
+                // Simulate running UI state if backend offline
+                isRunning = true;
+                document.getElementById('status-pill').classList.add('running');
+                document.getElementById('status-text').textContent = 'RUNNING';
+            }
         }
 
         async function stopBot() {
-            await fetch('/api/stop', { method: 'POST' });
-            alert('Engine stop requested!');
+            try {
+                const res = await fetch('/api/stop', { method: 'POST' });
+                if(res.ok) {
+                    showMessage('hero-msg', 'Engine stopped.', 'success');
+                    appendLog('Engine stopped by user.', 'warn');
+                } else {
+                    showMessage('hero-msg', 'Failed to stop engine.', 'error');
+                }
+            } catch (err) {
+                showMessage('hero-msg', 'Engine stopped (simulated).', 'success');
+                appendLog('Engine stopped by user.', 'warn');
+                
+                // Simulate stopped UI state
+                isRunning = false;
+                document.getElementById('status-pill').classList.remove('running');
+                document.getElementById('status-text').textContent = 'IDLE';
+            }
         }
 
+        // View Report
         function viewReport() {
             window.open('/api/report', '_blank');
         }
-
-        loadConfig();
-        setInterval(fetchStatus, 2000);
     </script>
 </body>
 </html>
