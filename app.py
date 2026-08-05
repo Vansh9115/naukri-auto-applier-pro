@@ -19,8 +19,8 @@ class NaukriAutoApplierApp(ctk.CTk):
         super().__init__()
 
         self.title("Naukri Auto-Applier Pro 🚀")
-        self.geometry("1150 x 880")
-        self.minsize(950, 700)
+        self.geometry("1150 x 900")
+        self.minsize(950, 720)
 
         self.config_data = load_config("config.json")
         self.bot_thread = None
@@ -62,7 +62,7 @@ class NaukriAutoApplierApp(ctk.CTk):
         body_frame.grid_rowconfigure(0, weight=1)
 
         # --- Left Panel: Settings Form ---
-        settings_scroll = ctk.CTkScrollableFrame(body_frame, label_text="⚙️ User Credentials & Profile Parameters", corner_radius=10)
+        settings_scroll = ctk.CTkScrollableFrame(body_frame, label_text="⚙️ User Profile & Application Parameters", corner_radius=10)
         settings_scroll.grid(row=0, column=0, padx=(0, 10), pady=0, sticky="nsew")
 
         # Naukri Credentials
@@ -159,16 +159,16 @@ class NaukriAutoApplierApp(ctk.CTk):
         )
         self.stop_btn.pack(fill="x", pady=(0, 8))
 
-        self.login_btn = ctk.CTkButton(
+        self.google_btn = ctk.CTkButton(
             btn_frame, 
-            text="🌐 Open Chrome & Log In To Naukri", 
+            text="🌐 Sign in with Google to Naukri", 
             font=ctk.CTkFont(size=13, weight="bold"),
             fg_color="#89B4FA",
             text_color="#11111B",
             hover_color="#B4BEFE",
-            command=self.open_login_window
+            command=self.open_google_login_window
         )
-        self.login_btn.pack(fill="x", pady=(0, 8))
+        self.google_btn.pack(fill="x", pady=(0, 8))
 
         self.report_btn = ctk.CTkButton(
             btn_frame, 
@@ -200,7 +200,7 @@ class NaukriAutoApplierApp(ctk.CTk):
 
         ctk.CTkLabel(
             console_frame, 
-            text="📋 Live Activity Log & Execution Output", 
+            text="📋 Live Activity Log & Session Output", 
             font=ctk.CTkFont(size=14, weight="bold")
         ).grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
@@ -338,16 +338,14 @@ class NaukriAutoApplierApp(ctk.CTk):
         self.stop_btn.configure(state="disabled")
         self.status_label.configure(text="● Status: IDLE", text_color="#A6ADC8")
         
-        tracker = JobTracker()
-        summary = tracker.get_analytics_summary()
-        self.log_to_console("\n" + "="*50, "SUCCESS")
-        self.log_to_console("📊 POST-RUN APPLICATION ANALYTICS", "SUCCESS")
-        self.log_to_console(f"  • Total Jobs Logged: {summary['total']}", "INFO")
-        self.log_to_console(f"  • Successfully Applied: {summary['applied']}", "SUCCESS")
-        self.log_to_console(f"  • Already Applied (Skipped): {summary['already_applied']}", "WARNING")
-        self.log_to_console(f"  • External Site Redirects: {summary['external']}", "INFO")
-        self.log_to_console(f"  • Failed / Missing Button: {summary['failed']}", "ERROR")
-        self.log_to_console("="*50 + "\n", "SUCCESS")
+        if self.bot_instance:
+            self.log_to_console("\n" + "="*50, "SUCCESS")
+            self.log_to_console("📊 CURRENT SESSION ANALYTICS (RESET PER SESSION)", "SUCCESS")
+            self.log_to_console(f"  • Successfully Applied: {self.bot_instance.session_applied}", "SUCCESS")
+            self.log_to_console(f"  • Already Applied (Skipped): {self.bot_instance.session_skipped}", "WARNING")
+            self.log_to_console(f"  • External Redirects (Skipped): {self.bot_instance.session_external}", "INFO")
+            self.log_to_console(f"  • Failed / Missing Button: {self.bot_instance.session_failed}", "ERROR")
+            self.log_to_console("="*50 + "\n", "SUCCESS")
 
     def show_analytics_report(self):
         tracker = JobTracker()
@@ -402,7 +400,8 @@ The interactive HTML Analytics Report has been opened in your browser!"""
                 auth_url = f"https://Vansh9115:{pat.strip()}@github.com/Vansh9115/naukri-auto-applier-pro.git"
                 try:
                     self.log_to_console("Pushing commits to GitHub repository...", "INFO")
-                    porcelain.push(repo, auth_url, "refs/heads/main")
+                    repo.refs[b'refs/heads/main'] = repo.head()
+                    porcelain.push(repo, auth_url, refspecs=b"refs/heads/main:refs/heads/main", force=True)
                     self.log_to_console("🎉 SUCCESS! Pushed repository to https://github.com/Vansh9115/naukri-auto-applier-pro", "SUCCESS")
                     messagebox.showinfo("GitHub Sync Success", "Repository successfully synced and pushed to GitHub!\n\nhttps://github.com/Vansh9115/naukri-auto-applier-pro")
                 except Exception as ex:
@@ -413,12 +412,12 @@ The interactive HTML Analytics Report has been opened in your browser!"""
 
         threading.Thread(target=_github_worker, daemon=True).start()
 
-    def open_login_window(self):
+    def open_google_login_window(self):
         self.save_settings_from_ui()
-        self.log_to_console("Opening Chrome browser window for Naukri login setup...", "INFO")
+        self.log_to_console("Opening Chrome browser window for Google Sign-in to Naukri...", "INFO")
         def _login_worker():
             bot = NaukriBot(self.config_data, log_callback=self.log_to_console)
-            bot.ensure_login_manual_only()
+            bot.ensure_google_login()
         threading.Thread(target=_login_worker, daemon=True).start()
 
 if __name__ == "__main__":
