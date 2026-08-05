@@ -1,0 +1,2 @@
+timestamp,job_id,title,company,location,url,status,notes
+2026-08-05 10:00:00,123456,Sample Operations Manager,Sample Corp,Bangalore,https://www.naukri.com/job-123456,APPLIED,Sample record

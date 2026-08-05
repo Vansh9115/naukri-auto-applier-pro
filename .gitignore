@@ -1,0 +1,18 @@
+# Persistent Browser User Profiles
+naukri_user_data/
+naukri_user_data_session/
+
+# Python Cache & Bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs & Temporary Reports
+*.log
+test_report.html
+
+# User Personal Applied Database (keep template applied_jobs.csv.example)
+applied_jobs.csv
+
+# Environment & Credentials
+.env

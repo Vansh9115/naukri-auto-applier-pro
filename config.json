@@ -1,0 +1,31 @@
+{
+  "naukri_email": "vanshlalwani91@gmail.com",
+  "naukri_password": "",
+  "keywords": [
+    "Cloud network"
+  ],
+  "locations": [
+    "Bangalore",
+    "Gurugram",
+    "Gurgaon",
+    "Delhi NCR",
+    "Noida",
+    "Hyderabad",
+    "Pune"
+  ],
+  "experience_years": 4,
+  "current_ctc_lpa": 4.0,
+  "expected_ctc_lpa": 6.5,
+  "notice_period_days": 15,
+  "notice_period_str": "15 Days or less",
+  "resume_path": "C:/Users/vansh/OneDrive/Desktop/Vansh Lalwani - Resume.pdf",
+  "willing_to_relocate": true,
+  "max_applications_per_run": 30,
+  "headless": true,
+  "delay_between_jobs_seconds": [
+    3,
+    6
+  ],
+  "chrome_user_data_dir": "./naukri_user_data",
+  "log_file": "applied_jobs.csv"
+}
