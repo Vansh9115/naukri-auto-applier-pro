@@ -3,43 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Naukri Auto-Applier Pro 🚀 | Enterprise Web Application</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <title>Naukri Auto-Applier Pro 🚀 | Enterprise Job Engine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #060913;
-            --surface: #0e1726;
-            --surface-card: rgba(23, 33, 53, 0.7);
-            --primary: #00f2fe;
-            --primary-glow: rgba(0, 242, 254, 0.25);
-            --accent-purple: #9d4edd;
-            --emerald: #10b981;
-            --amber: #f59e0b;
-            --rose: #f43f5e;
-            --text-main: #f8fafc;
+            --bg-dark: #030712;
+            --surface-glass: rgba(15, 23, 42, 0.65);
+            --surface-card: rgba(30, 41, 59, 0.5);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(56, 189, 248, 0.4);
+            --cyan-glow: #38bdf8;
+            --purple-glow: #a855f7;
+            --emerald-glow: #10b981;
+            --rose-glow: #f43f5e;
+            --text-primary: #f8fafc;
             --text-muted: #94a3b8;
-            --border: rgba(255, 255, 255, 0.08);
-            --border-hover: rgba(0, 242, 254, 0.4);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: 'Outfit', sans-serif;
-            background: var(--bg);
-            color: var(--text-main);
-            line-height: 1.6;
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(0, 242, 254, 0.08) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(157, 78, 221, 0.08) 0px, transparent 50%);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
             min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.05) 0%, transparent 60%);
+            background-attachment: fixed;
         }
 
-        /* --- Header Bar --- */
+        /* --- Header Navigation --- */
         header {
-            background: rgba(14, 23, 38, 0.85);
-            backdrop-filter: blur(16px);
-            padding: 16px 40px;
-            border-bottom: 1px solid var(--border);
+            background: rgba(3, 7, 18, 0.8);
+            backdrop-filter: blur(20px);
+            padding: 18px 45px;
+            border-bottom: 1px solid var(--border-glass);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -48,10 +49,10 @@
             z-index: 100;
         }
 
-        .brand {
+        .brand-logo {
             font-size: 22px;
             font-weight: 800;
-            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 50%, #9d4edd 100%);
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #a855f7 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             display: flex;
@@ -59,142 +60,143 @@
             gap: 10px;
         }
 
-        .nav-links { display: flex; gap: 24px; align-items: center; }
+        .nav-links { display: flex; gap: 28px; align-items: center; }
         .nav-links a { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 14px; transition: color 0.3s; }
-        .nav-links a:hover { color: var(--primary); }
+        .nav-links a:hover { color: var(--cyan-glow); }
 
-        .status-badge {
+        .status-pill {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 6px 14px;
-            border-radius: 20px;
+            padding: 6px 16px;
+            border-radius: 30px;
             background: rgba(16, 185, 129, 0.1);
             border: 1px solid rgba(16, 185, 129, 0.3);
-            color: var(--emerald);
+            color: var(--emerald-glow);
             font-size: 13px;
             font-weight: 700;
         }
 
-        .pulse-dot {
+        .pulse-indicator {
             width: 8px;
             height: 8px;
-            background: var(--emerald);
+            background: var(--emerald-glow);
             border-radius: 50%;
-            box-shadow: 0 0 10px var(--emerald);
-            animation: pulse 2s infinite;
+            box-shadow: 0 0 12px var(--emerald-glow);
+            animation: pulse-ring 2s infinite;
         }
 
-        @keyframes pulse {
+        @keyframes pulse-ring {
             0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
 
-        .container { max-width: 1250px; margin: 30px auto; padding: 0 20px; }
+        .container { max-width: 1280px; margin: 35px auto; padding: 0 24px; }
 
         /* --- Hero Section --- */
-        .hero-banner {
-            background: linear-gradient(135deg, rgba(0, 242, 254, 0.1) 0%, rgba(157, 78, 221, 0.1) 100%);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 35px 40px;
-            margin-bottom: 30px;
+        .hero-card {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border-glass);
+            border-radius: 24px;
+            padding: 40px;
+            margin-bottom: 35px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        .hero-text h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; color: #fff; }
-        .hero-text p { font-size: 15px; color: var(--text-muted); max-width: 600px; }
+        .hero-title h1 { font-size: 34px; font-weight: 800; margin-bottom: 10px; color: #fff; letter-spacing: -0.5px; }
+        .hero-title p { font-size: 15px; color: var(--text-muted); max-width: 620px; }
 
-        .action-bar { display: flex; gap: 12px; }
+        .btn-group { display: flex; gap: 14px; }
 
         .btn {
-            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
-            color: #060913;
-            padding: 12px 24px;
-            border-radius: 10px;
+            background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+            color: #030712;
+            padding: 13px 26px;
+            border-radius: 12px;
             text-decoration: none;
             font-weight: 700;
             font-size: 14px;
             border: none;
             cursor: pointer;
-            transition: all 0.25s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 15px var(--primary-glow);
+            gap: 10px;
+            box-shadow: 0 10px 25px -5px rgba(56, 189, 248, 0.3);
         }
-        .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
-        .btn-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
-        .btn-purple { background: linear-gradient(135deg, #9d4edd 0%, #7b2cbf 100%); color: #fff; box-shadow: 0 4px 15px rgba(157, 78, 221, 0.3); }
-        .btn-danger { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); color: #fff; }
+        .btn:hover { transform: translateY(-3px); filter: brightness(1.15); box-shadow: 0 15px 30px -5px rgba(56, 189, 248, 0.4); }
+        .btn-emerald { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3); }
+        .btn-purple { background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%); color: #fff; box-shadow: 0 10px 25px -5px rgba(168, 85, 247, 0.3); }
+        .btn-rose { background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%); color: #fff; }
 
-        /* --- Multi-Tier Grid --- */
-        .grid-main { display: grid; grid-template-columns: 4.5fr 5.5fr; gap: 25px; }
+        /* --- Grid Layout --- */
+        .main-grid { display: grid; grid-template-columns: 4.6fr 5.4fr; gap: 30px; }
 
-        .card {
-            background: var(--surface-card);
+        .glass-card {
+            background: var(--surface-glass);
             backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 25px;
-            transition: border-color 0.3s;
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.3);
         }
-        .card:hover { border-color: var(--border-hover); }
+        .glass-card:hover { border-color: var(--border-hover); }
 
-        .card-header { font-size: 18px; font-weight: 700; margin-bottom: 20px; color: var(--primary); display: flex; align-items: center; justify-content: space-between; }
+        .card-header { font-size: 19px; font-weight: 700; margin-bottom: 22px; color: var(--cyan-glow); display: flex; align-items: center; justify-content: space-between; }
 
-        .form-row { display: flex; gap: 15px; margin-bottom: 14px; }
-        .form-group { flex: 1; margin-bottom: 14px; }
-        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); }
+        .form-row { display: flex; gap: 16px; margin-bottom: 16px; }
+        .form-group { flex: 1; margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-muted); }
         .form-group input, .form-group select {
             width: 100%;
-            padding: 11px 15px;
-            background: rgba(6, 9, 19, 0.8);
-            border: 1px solid var(--border);
-            border-radius: 10px;
+            padding: 12px 16px;
+            background: rgba(3, 7, 18, 0.75);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
             color: #fff;
             font-size: 14px;
-            transition: border-color 0.3s;
+            transition: all 0.3s ease;
         }
-        .form-group input:focus, .form-group select:focus { border-color: var(--primary); outline: none; }
+        .form-group input:focus, .form-group select:focus { border-color: var(--cyan-glow); outline: none; box-shadow: 0 0 15px rgba(56, 189, 248, 0.2); }
 
-        /* Resume Upload Box */
-        .file-upload-box {
-            border: 2px dashed rgba(0, 242, 254, 0.3);
-            background: rgba(0, 242, 254, 0.03);
-            border-radius: 12px;
-            padding: 20px;
+        /* File Upload Zone */
+        .upload-dropzone {
+            border: 2px dashed rgba(56, 189, 248, 0.35);
+            background: rgba(56, 189, 248, 0.03);
+            border-radius: 16px;
+            padding: 24px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
         }
-        .file-upload-box:hover { border-color: var(--primary); background: rgba(0, 242, 254, 0.08); }
-        .file-upload-box p { font-size: 13px; color: var(--text-muted); margin-top: 5px; }
+        .upload-dropzone:hover { border-color: var(--cyan-glow); background: rgba(56, 189, 248, 0.08); transform: scale(1.01); }
 
-        /* Metrics Display */
-        .metrics-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
-        .metric-card {
-            background: rgba(6, 9, 19, 0.7);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 15px;
+        /* Metric Dashboard */
+        .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+        .metric-tile {
+            background: rgba(3, 7, 18, 0.7);
+            border: 1px solid var(--border-glass);
+            border-radius: 14px;
+            padding: 16px 12px;
             text-align: center;
         }
-        .metric-card .title { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-        .metric-card .value { font-size: 26px; font-weight: 800; margin-top: 5px; }
+        .metric-tile .label { font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px; }
+        .metric-tile .count { font-size: 28px; font-weight: 800; margin-top: 6px; }
 
-        /* Terminal Console */
-        .terminal-box {
-            background: #04060c;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 16px;
-            height: 350px;
+        /* Console Log Window */
+        .terminal-window {
+            background: #02040a;
+            border: 1px solid var(--border-glass);
+            border-radius: 14px;
+            padding: 18px;
+            height: 360px;
             overflow-y: auto;
             font-family: 'JetBrains Mono', monospace;
             font-size: 12px;
@@ -202,40 +204,40 @@
             line-height: 1.6;
         }
 
-        footer { text-align: center; padding: 30px; color: var(--text-muted); font-size: 14px; border-top: 1px solid var(--border); margin-top: 50px; }
+        footer { text-align: center; padding: 35px; color: var(--text-muted); font-size: 14px; border-top: 1px solid var(--border-glass); margin-top: 60px; }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="brand">🚀 Naukri Auto-Applier Pro</div>
+        <div class="brand-logo">🚀 Naukri Auto-Applier Pro</div>
         <div class="nav-links">
             <a href="#auth">Auth Hub</a>
             <a href="#params">Parameters</a>
             <a href="#telemetry">Telemetry</a>
-            <div class="status-badge" id="statusBadge">
-                <div class="pulse-dot"></div> <span id="statusText">IDLE</span>
+            <div class="status-pill" id="statusPill">
+                <div class="pulse-indicator"></div> <span id="statusText">IDLE</span>
             </div>
         </div>
     </header>
 
     <div class="container">
-        <div class="hero-banner">
-            <div class="hero-text">
-                <h1>Multi-Tier Enterprise Job Automation</h1>
-                <p>Automate your job search on Naukri with intelligent chatbot solvers, resume uploading, and real-time session telemetry.</p>
+        <div class="hero-card">
+            <div class="hero-title">
+                <h1>Autonomous Job Application Platform</h1>
+                <p>Intelligent Playwright automation engine with Google OAuth, chatbot prompt parsing, resume uploading, and real-time session telemetry.</p>
             </div>
-            <div class="action-bar">
-                <button class="btn btn-green" onclick="startBot()">🚀 Launch Engine</button>
-                <button class="btn btn-danger" onclick="stopBot()">⏸ Pause</button>
+            <div class="btn-group">
+                <button class="btn btn-emerald" onclick="startBot()">🚀 Launch Engine</button>
+                <button class="btn btn-rose" onclick="stopBot()">⏸ Pause</button>
             </div>
         </div>
 
-        <div class="grid-main">
-            <!-- Left Side: Auth & Params Tiers -->
+        <div class="main-grid">
+            <!-- Left Panel -->
             <div>
-                <!-- Tier 1: Authentication Hub -->
-                <div class="card" id="auth">
+                <!-- Authentication Hub -->
+                <div class="glass-card" id="auth">
                     <div class="card-header">
                         <span>🔑 Tier 1: Naukri Authentication Hub</span>
                     </div>
@@ -249,16 +251,16 @@
                             <input type="password" id="naukriPassword" placeholder="••••••••">
                         </div>
                     </div>
-                    <div style="display: flex; gap: 10px;">
+                    <div style="display: flex; gap: 12px;">
                         <button class="btn btn-purple" style="flex:1;" onclick="googleLogin()">🌐 Sign in with Google to Naukri</button>
-                        <button class="btn" style="flex:1; background: rgba(255,255,255,0.1); color: #fff;" onclick="manualLogin()">💻 Open Chrome Window</button>
+                        <button class="btn" style="flex:1; background: rgba(255,255,255,0.08); color: #fff;" onclick="manualLogin()">💻 Open Chrome Window</button>
                     </div>
                 </div>
 
-                <!-- Tier 2: Application Parameters & Resume Picker -->
-                <div class="card" id="params">
+                <!-- Parameters & Resume Picker -->
+                <div class="glass-card" id="params">
                     <div class="card-header">
-                        <span>⚙️ Tier 2: Profile & Job Search Parameters</span>
+                        <span>⚙️ Tier 2: Search Criteria & Resume Upload</span>
                     </div>
                     <form id="configForm">
                         <div class="form-group">
@@ -295,13 +297,13 @@
                             </div>
                         </div>
 
-                        <!-- Resume PDF Upload Control -->
+                        <!-- Resume Upload Zone -->
                         <div class="form-group">
-                            <label>Attached Resume File</label>
-                            <div class="file-upload-box" onclick="document.getElementById('resumeFileInput').click()">
-                                <span style="font-size: 24px;">📁</span>
-                                <div style="font-weight: 700; margin-top: 4px;" id="resumeFileName">Click to Browse & Attach Resume PDF</div>
-                                <p id="resumePathDisplay">C:/Users/vansh/OneDrive/Desktop/Vansh Lalwani - Resume.pdf</p>
+                            <label>Attached Resume PDF</label>
+                            <div class="upload-dropzone" onclick="document.getElementById('resumeFileInput').click()">
+                                <span style="font-size: 28px;">📄</span>
+                                <div style="font-weight: 700; margin-top: 6px; font-size: 15px;" id="resumeFileName">Click to Browse & Attach Resume PDF</div>
+                                <p id="resumePathDisplay" style="font-size: 12px; margin-top: 4px; color: var(--text-muted);">C:/Users/vansh/OneDrive/Desktop/Vansh Lalwani - Resume.pdf</p>
                             </div>
                             <input type="file" id="resumeFileInput" accept=".pdf,.doc,.docx" style="display: none;" onchange="uploadResumeFile(this)">
                         </div>
@@ -311,39 +313,38 @@
                 </div>
             </div>
 
-            <!-- Right Side: Telemetry & Analytics -->
+            <!-- Right Panel -->
             <div id="telemetry">
-                <!-- Session Metrics -->
-                <div class="card">
+                <div class="glass-card">
                     <div class="card-header">
-                        <span>📊 Tier 3: Real-Time Session Telemetry (Resets per Run)</span>
-                        <button class="btn btn-purple" style="font-size: 12px; padding: 6px 12px;" onclick="viewReport()">View Report</button>
+                        <span>📊 Tier 3: Real-Time Session Metrics (Resets per Run)</span>
+                        <button class="btn btn-purple" style="font-size: 12px; padding: 7px 14px;" onclick="viewReport()">View Report</button>
                     </div>
-                    <div class="metrics-container">
-                        <div class="metric-card">
-                            <div class="title">APPLIED</div>
-                            <div class="value" style="color: var(--emerald);" id="statApplied">0</div>
+                    <div class="metrics-grid">
+                        <div class="metric-tile">
+                            <div class="label">APPLIED</div>
+                            <div class="count" style="color: var(--emerald-glow);" id="statApplied">0</div>
                         </div>
-                        <div class="metric-card">
-                            <div class="title">DUPLICATES</div>
-                            <div class="value" style="color: var(--amber);" id="statSkipped">0</div>
+                        <div class="metric-tile">
+                            <div class="label">DUPLICATES</div>
+                            <div class="count" style="color: #f59e0b;" id="statSkipped">0</div>
                         </div>
-                        <div class="metric-card">
-                            <div class="title">EXTERNAL</div>
-                            <div class="value" style="color: var(--accent-purple);" id="statExternal">0</div>
+                        <div class="metric-tile">
+                            <div class="label">EXTERNAL</div>
+                            <div class="count" style="color: var(--purple-glow);" id="statExternal">0</div>
                         </div>
-                        <div class="metric-card">
-                            <div class="title">FAILED</div>
-                            <div class="value" style="color: var(--rose);" id="statFailed">0</div>
+                        <div class="metric-tile">
+                            <div class="label">FAILED</div>
+                            <div class="count" style="color: var(--rose-glow);" id="statFailed">0</div>
                         </div>
                     </div>
-                    <div class="card-header" style="margin-top: 10px; margin-bottom: 10px;">
-                        <span>📋 Execution Console Output</span>
+                    <div class="card-header" style="margin-top: 10px; margin-bottom: 12px;">
+                        <span>📋 Live Execution Telemetry Output</span>
                     </div>
-                    <div class="terminal-box" id="consoleOutput">
-                        ℹ️ Enterprise Web Application initialized.<br>
-                        ℹ️ Session metrics reset to 0.<br>
-                        ℹ️ Ready to start automation engine...
+                    <div class="terminal-window" id="consoleOutput">
+                        ℹ️ Enterprise Web Engine initialized.<br>
+                        ℹ️ Session counters reset to 0.<br>
+                        ℹ️ Ready for automation session...
                     </div>
                 </div>
             </div>
@@ -351,7 +352,7 @@
     </div>
 
     <footer>
-        <p>Naukri Auto-Applier Pro &copy; 2026 | Enterprise Edition | Hosted on <a href="https://github.com/Vansh9115/naukri-auto-applier-pro" target="_blank" style="color: var(--primary);">GitHub Repository</a></p>
+        <p>Naukri Auto-Applier Pro &copy; 2026 | Enterprise Edition | Hosted on <a href="https://github.com/Vansh9115/naukri-auto-applier-pro" target="_blank" style="color: var(--cyan-glow);">GitHub Repository</a></p>
     </footer>
 
     <script>
@@ -365,13 +366,13 @@
                     document.getElementById('statExternal').innerText = data.external || 0;
                     document.getElementById('statFailed').innerText = data.failed || 0;
                     
-                    const badge = document.getElementById('statusBadge');
+                    const pill = document.getElementById('statusPill');
                     const text = document.getElementById('statusText');
                     if (data.running) {
-                        badge.style.borderColor = 'rgba(16, 185, 129, 0.6)';
+                        pill.style.borderColor = 'rgba(16, 185, 129, 0.6)';
                         text.innerText = 'RUNNING';
                     } else {
-                        badge.style.borderColor = 'rgba(148, 163, 184, 0.3)';
+                        pill.style.borderColor = 'rgba(148, 163, 184, 0.3)';
                         text.innerText = 'IDLE';
                     }
 
@@ -447,12 +448,10 @@
 
         async function googleLogin() {
             await fetch('/api/google-login', { method: 'POST' });
-            alert('Opening Chrome for Google Sign-in to Naukri...');
         }
 
         async function manualLogin() {
             await fetch('/api/manual-login', { method: 'POST' });
-            alert('Opening Chrome window for Naukri login setup...');
         }
 
         async function stopBot() {

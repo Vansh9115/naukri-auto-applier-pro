@@ -3,6 +3,7 @@ import sys
 import json
 import time
 import random
+import subprocess
 import urllib.parse
 from pathlib import Path
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
@@ -13,6 +14,30 @@ def load_config(config_path="config.json"):
         return {}
     with open(config_path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+def open_system_chrome(url="https://www.naukri.com/nlogin/login", user_data_dir="./naukri_user_data"):
+    user_data_path = os.path.abspath(user_data_dir)
+    possible_chrome_paths = [
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+        os.path.join(os.environ.get("LOCALAPPDATA", ""), r"Google\Chrome\Application\chrome.exe")
+    ]
+    
+    for chrome_path in possible_chrome_paths:
+        if os.path.exists(chrome_path):
+            try:
+                subprocess.Popen([
+                    chrome_path,
+                    f"--user-data-dir={user_data_path}",
+                    "--start-maximized",
+                    "--no-first-run",
+                    "--no-default-browser-check",
+                    url
+                ])
+                return True
+            except Exception:
+                pass
+    return False
 
 class NaukriBot:
     def __init__(self, config=None, log_callback=None):
@@ -41,7 +66,6 @@ class NaukriBot:
                 pass
 
     def _cleanup_stale_locks(self, user_data_path):
-        """ Cleans up Chromium lock files if left by crashed instances """
         for lock_name in ["SingletonLock", "SingletonCookie", "SingletonSocket"]:
             lock_file = os.path.join(user_data_path, lock_name)
             if os.path.exists(lock_file):
@@ -61,7 +85,7 @@ class NaukriBot:
         self.stop_requested = True
         self.log("Stop requested by user. Finishing current operation...", "WARNING")
 
-    def _create_browser_context(self, p, force_visible=False):
+    def _create_browser_context(self, p, force_visible=True):
         self._cleanup_stale_locks(self.user_data_dir)
         headless_mode = False if force_visible else self.config.get("headless", False)
         
@@ -73,7 +97,10 @@ class NaukriBot:
             "--deny-permission-prompts",
             "--hide-crash-restore-bubble",
             "--disable-session-crashed-bubble",
-            "--disable-infobars"
+            "--disable-infobars",
+            "--new-window",
+            "--window-position=50,50",
+            "--window-size=1280,850"
         ]
 
         def _launch(dir_path):
@@ -99,7 +126,6 @@ class NaukriBot:
             return _launch(fallback_dir)
 
     def start(self):
-        # Reset session metrics to 0
         self.session_applied = 0
         self.session_skipped = 0
         self.session_failed = 0
@@ -111,6 +137,10 @@ class NaukriBot:
         with sync_playwright() as p:
             context = self._create_browser_context(p, force_visible=True)
             page = context.pages[0] if context.pages else context.new_page()
+            try:
+                page.bring_to_front()
+            except Exception:
+                pass
             
             if not self.ensure_login(page, context):
                 self.log("Login check unverified. Stopping session.", "WARNING")
@@ -140,24 +170,17 @@ class NaukriBot:
                 pass
 
     def ensure_google_login(self):
-        """ Opens Chrome directly to Naukri Google OAuth sign-in """
         self.log("Opening Chrome window for Google Authentication to Naukri...")
+        if open_system_chrome("https://www.naukri.com/nlogin/login", self.user_data_dir):
+            self.log("🌐 Chrome window launched directly on your screen! Complete Google login in Chrome.", "SUCCESS")
+            return
+        
         with sync_playwright() as p:
             context = self._create_browser_context(p, force_visible=True)
             page = context.pages[0] if context.pages else context.new_page()
+            page.bring_to_front()
             page.goto("https://www.naukri.com/nlogin/login", wait_until="domcontentloaded")
-            self.random_sleep(2, 3)
-
-            # Click Google sign in button if available
-            try:
-                google_btn = page.query_selector("button:has-text('Google'), div[class*='google'], a[href*='google']")
-                if google_btn:
-                    google_btn.click()
-                    self.log("Clicked Google Sign In button.", "INFO")
-            except Exception:
-                pass
-
-            self.log("🌐 Chrome is open! Complete Google login in Chrome. Close Chrome when finished.", "SUCCESS")
+            self.log("🌐 Chrome is open! Complete Google login in Chrome.", "SUCCESS")
             while len(context.pages) > 0:
                 try:
                     time.sleep(2)
@@ -166,11 +189,16 @@ class NaukriBot:
 
     def ensure_login_manual_only(self):
         self.log("Opening Chrome window for Naukri login setup...")
+        if open_system_chrome("https://www.naukri.com/nlogin/login", self.user_data_dir):
+            self.log("🌐 Chrome window launched directly on your screen! Please log into Naukri.", "SUCCESS")
+            return
+
         with sync_playwright() as p:
             context = self._create_browser_context(p, force_visible=True)
             page = context.pages[0] if context.pages else context.new_page()
+            page.bring_to_front()
             page.goto("https://www.naukri.com/nlogin/login", wait_until="domcontentloaded")
-            self.log("🌐 Chrome is open! Please log into your Naukri account in the Chrome window. Close Chrome when finished.", "SUCCESS")
+            self.log("🌐 Chrome is open! Please log into Naukri.", "SUCCESS")
             while len(context.pages) > 0:
                 try:
                     time.sleep(2)
@@ -298,7 +326,6 @@ class NaukriBot:
                     company = comp_elem.text_content().strip() if comp_elem else "Unknown"
                     job_id = card.get_attribute("data-job-id") or url
 
-                    # Check for on-card 'Applied' badge
                     card_applied = card.query_selector(".already-applied, span:has-text('Applied'), .applied-badge")
                     if card_applied or self.tracker.is_applied(job_id, url, title, company):
                         self.log(f"⏭ Skipping duplicate: {title} @ {company}", "INFO")
@@ -352,7 +379,6 @@ class NaukriBot:
 
             btn_text = apply_btn.text_content().strip()
             
-            # STRICT REQUIREMENT: Skip jobs that redirect to company career portal / external site
             if any(ext in btn_text.lower() for ext in ["company site", "company website", "external", "redirect"]):
                 self.log(f"⏭ Skipping company career portal redirect ({btn_text}).", "INFO")
                 self.tracker.log_application(job['id'], job['title'], job['company'], "", job['url'], status="EXTERNAL", notes=btn_text)
@@ -386,15 +412,9 @@ class NaukriBot:
                 pass
 
     def solve_application_questionnaires(self, page, job):
-        """
-        Advanced Multi-Step Questionnaire & Chatbot Solver.
-        Handles drawer popups, chatbot questions (e.g. 'How many years of experience do you have in X?'),
-        radio chips, and text inputs.
-        """
         exp_years = self.config.get("experience_years", 4)
         curr_ctc = self.config.get("current_ctc_lpa", 4.0)
         exp_ctc = self.config.get("expected_ctc_lpa", 6.5)
-        notice_str = self.config.get("notice_period_str", "15 Days or less")
         notice_days = self.config.get("notice_period_days", 15)
         resume_file = self.config.get("resume_path", "")
         relocate = self.config.get("willing_to_relocate", True)
@@ -422,7 +442,6 @@ class NaukriBot:
 
             self.log(f"  📋 Solving Questionnaire Step {step}...")
 
-            # Extract Chatbot Question Bubble Text if present (e.g. 'How many years of experience do you have in Switch Configuration?')
             question_text = ""
             try:
                 q_elem = overlay.query_selector("div[class*='msg'], div[class*='bubble'], div[class*='question'], .chat-message, div[class*='text']")
@@ -432,7 +451,6 @@ class NaukriBot:
             except Exception:
                 pass
 
-            # 1. Fill Experience & Text Inputs
             inputs = overlay.query_selector_all("input[type='text'], input[type='number'], input:not([type]), textarea")
             for inp in inputs:
                 try:
@@ -452,7 +470,6 @@ class NaukriBot:
                     
                     context_str = f"{placeholder} {name_attr} {id_attr} {label_text} {question_text}"
 
-                    # Match Chatbot / Form Experience Questions
                     if any(k in context_str for k in [
                         "how many years", "years of experience", "experience in", "exp", "year", 
                         "work experience", "relevant", "total experience", "industry experience", 
@@ -480,7 +497,6 @@ class NaukriBot:
                 except Exception:
                     pass
 
-            # 2. File Upload for Resume
             if resume_file and os.path.exists(resume_file):
                 file_inputs = overlay.query_selector_all("input[type='file']")
                 for finp in file_inputs:
@@ -490,7 +506,6 @@ class NaukriBot:
                     except Exception:
                         pass
 
-            # 3. Radio Buttons & Experience Option Chips
             radio_labels = overlay.query_selector_all("label, .chip, .option, span.radio-label, div.radio-option, button.option, div[class*='chip']")
             for rlbl in radio_labels:
                 try:
@@ -516,7 +531,6 @@ class NaukriBot:
                 except Exception:
                     pass
 
-            # 4. Click Submit / Save / Next / Continue button
             submit_btn = overlay.query_selector(
                 "button:has-text('Save'), button:has-text('Submit'), button:has-text('Next'), button:has-text('Continue'), button:has-text('Save & Apply'), button.submit-btn, input[type='submit']"
             )
