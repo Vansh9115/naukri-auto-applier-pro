@@ -27,5 +27,9 @@
     6
   ],
   "chrome_user_data_dir": "./naukri_user_data",
-  "log_file": "applied_jobs.csv"
+  "log_file": "applied_jobs.csv",
+  "experience": 4,
+  "noticePeriod": "15 Days or less",
+  "currentCTC": 4,
+  "expectedCTC": 6.5
 }
