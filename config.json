@@ -20,7 +20,7 @@
   "notice_period_str": "15 Days or less",
   "resume_path": "C:/Users/vansh/OneDrive/Desktop/Vansh Lalwani - Resume.pdf",
   "willing_to_relocate": true,
-  "max_applications_per_run": 30,
+  "max_applications_per_run": 50,
   "headless": true,
   "delay_between_jobs_seconds": [
     3,
