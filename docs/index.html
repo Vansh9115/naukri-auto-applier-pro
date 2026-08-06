@@ -3,25 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Naukri Auto-Applier Pro — Download</title>
+    <title>Naukri Auto-Applier Pro — Download & Setup Guide</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
             --bg: #06080f; --surface: rgba(255,255,255,0.04); --border: rgba(255,255,255,0.08);
-            --text: #e8eaed; --dim: #8b92a5; --accent: #6366f1; --green: #10b981;
+            --text: #e8eaed; --dim: #8b92a5; --accent: #6366f1; --green: #10b981; --amber: #f59e0b;
         }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
         .bg-glow { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
         .bg-glow .orb { position: absolute; border-radius: 50%; filter: blur(120px); }
         .bg-glow .orb:nth-child(1) { width: 600px; height: 600px; background: rgba(99,102,241,0.1); top: -10%; left: -5%; }
         .bg-glow .orb:nth-child(2) { width: 500px; height: 500px; background: rgba(168,85,247,0.06); top: 50%; right: -10%; }
-        .container { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; padding: 60px 24px; text-align: center; }
+        .container { position: relative; z-index: 1; max-width: 820px; margin: 0 auto; padding: 60px 24px; text-align: center; }
         .badge { display: inline-block; padding: 6px 16px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--dim); letter-spacing: 0.5px; margin-bottom: 24px; }
         h1 { font-size: 48px; font-weight: 900; letter-spacing: -2px; line-height: 1.1; background: linear-gradient(135deg, #fff, var(--dim)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .subtitle { margin-top: 16px; font-size: 18px; color: var(--dim); line-height: 1.6; max-width: 600px; margin-left: auto; margin-right: auto; }
-        .cta { display: inline-flex; align-items: center; gap: 8px; margin-top: 32px; padding: 14px 32px; border-radius: 12px; background: linear-gradient(135deg, var(--accent), #818cf8); color: #fff; font-size: 16px; font-weight: 700; text-decoration: none; box-shadow: 0 4px 24px rgba(99,102,241,0.3); transition: all 0.2s; }
+        .cta { display: inline-flex; align-items: center; gap: 8px; margin-top: 32px; padding: 16px 36px; border-radius: 12px; background: linear-gradient(135deg, var(--accent), #818cf8); color: #fff; font-size: 16px; font-weight: 700; text-decoration: none; box-shadow: 0 4px 24px rgba(99,102,241,0.3); transition: all 0.2s; }
         .cta:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(99,102,241,0.4); }
         .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 56px; text-align: left; }
         .feature { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
@@ -33,11 +33,11 @@
         .step { display: flex; gap: 16px; margin-bottom: 20px; align-items: flex-start; }
         .step-num { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), #818cf8); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; flex-shrink: 0; }
         .step-content h4 { font-size: 15px; font-weight: 700; }
-        .step-content p { font-size: 13px; color: var(--dim); margin-top: 4px; }
+        .step-content p { font-size: 13px; color: var(--dim); margin-top: 4px; line-height: 1.5; }
         code { background: var(--surface); padding: 2px 8px; border-radius: 6px; font-size: 13px; color: var(--green); }
-        .note { margin-top: 48px; padding: 20px; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; text-align: left; }
-        .note h4 { color: #f59e0b; font-size: 14px; margin-bottom: 8px; }
-        .note p { font-size: 13px; color: var(--dim); line-height: 1.6; }
+        .note { margin-top: 48px; padding: 24px; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); border-radius: 16px; text-align: left; }
+        .note h4 { color: var(--amber); font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+        .note ul { list-style: disc; margin-left: 20px; color: var(--dim); font-size: 13px; line-height: 1.7; }
         .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 13px; color: var(--dim); }
         .footer a { color: var(--accent); text-decoration: none; }
     </style>
@@ -47,64 +47,75 @@
 <div class="container">
     <div class="badge">🚀 Open Source • Free Forever</div>
     <h1>Naukri Auto-Applier Pro</h1>
-    <p class="subtitle">Stop applying manually. This desktop tool auto-applies to matching jobs on Naukri.com — with intelligent form filling, Google login, and a beautiful dashboard.</p>
-    <a href="https://github.com/Vansh9115/naukri-auto-applier-pro/archive/refs/heads/main.zip" class="cta">⬇️ Download ZIP</a>
+    <p class="subtitle">Automate your job search on Naukri.com — intelligent questionnaire filling, Google Chrome integration, and live tracking dashboard.</p>
+    <a href="https://github.com/Vansh9115/naukri-auto-applier-pro/archive/refs/heads/main.zip" class="cta">⬇️ Download ZIP for Windows</a>
 
     <div class="features">
         <div class="feature">
             <div class="icon">🧠</div>
             <h3>Smart Auto-Fill</h3>
-            <p>Automatically answers every chatbot question — experience, CTC, notice period, skills — without any user input.</p>
+            <p>Automatically answers chatbot prompts (experience, CTC, notice period, skills) without manual typing.</p>
         </div>
         <div class="feature">
             <div class="icon">🔐</div>
             <h3>Google Login</h3>
-            <p>Sign in with your real Google Chrome. Your session is saved securely on your machine.</p>
+            <p>Sign in using your real Google Chrome browser. Your session is saved securely on your machine.</p>
         </div>
         <div class="feature">
             <div class="icon">📊</div>
             <h3>Live Dashboard</h3>
-            <p>Track applications in real-time with a premium web dashboard. View applied, skipped, and failed counts.</p>
+            <p>Track applications in real-time with a modern dark dashboard. View applied, skipped, and failed metrics.</p>
         </div>
         <div class="feature">
             <div class="icon">🎯</div>
             <h3>Only Skip External</h3>
-            <p>Never skips jobs just because they have forms. Only skips company career portal redirects.</p>
+            <p>Fills all Naukri chatbots and form drawers. Only skips external company portal redirects.</p>
         </div>
     </div>
 
     <div class="steps">
-        <h2>Setup in 3 Minutes</h2>
+        <h2>Quick Setup Guide for Friends</h2>
         <div class="step">
             <div class="step-num">1</div>
             <div class="step-content">
-                <h4>Download & Extract</h4>
-                <p>Click the download button above. Extract the ZIP anywhere on your computer.</p>
+                <h4>Make Sure Python is Installed</h4>
+                <p>Ensure Python 3.10+ is installed on your PC from <a href="https://www.python.org/downloads/" target="_blank" style="color:var(--accent);">python.org</a>.<br><strong style="color:#ef4444;">IMPORTANT:</strong> During installation, check the box that says <strong>"Add python.exe to PATH"</strong>!</p>
             </div>
         </div>
         <div class="step">
             <div class="step-num">2</div>
             <div class="step-content">
-                <h4>Install Python Dependencies</h4>
-                <p>Open the extracted folder and double-click <code>install.bat</code>. This installs Flask and Playwright.</p>
+                <h4>Download & Extract</h4>
+                <p>Click the <strong>Download ZIP</strong> button above. Right-click the downloaded `.zip` file and click <strong>Extract All</strong>.</p>
             </div>
         </div>
         <div class="step">
             <div class="step-num">3</div>
             <div class="step-content">
-                <h4>Launch the App</h4>
-                <p>Double-click <code>run_web_app.bat</code>. The dashboard opens at <code>http://localhost:5000</code>. Login to Naukri and start applying!</p>
+                <h4>Run Setup (`install.bat`)</h4>
+                <p>Open the extracted folder and double-click <code>install.bat</code>. This automatically installs Flask and Playwright.<br><em>(If Windows Defender pops up "Windows protected your PC", click <strong>"More info"</strong> -> <strong>"Run anyway"</strong>)</em>.</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-content">
+                <h4>Start App (`run_web_app.bat`)</h4>
+                <p>Double-click <code>run_web_app.bat</code>. The app opens in your browser at <code>http://localhost:5000</code>!</p>
             </div>
         </div>
     </div>
 
     <div class="note">
-        <h4>⚠️ Important: This is a Desktop Tool</h4>
-        <p>This app runs on YOUR computer and controls YOUR Chrome browser. It cannot be hosted as a website because it needs to interact with your browser directly. Each person downloads and runs it on their own laptop.</p>
+        <h4>💡 Troubleshooting Guide for First-Time Users</h4>
+        <ul>
+            <li><strong>If double-clicking `install.bat` flashes and closes immediately:</strong> Python is missing! Download Python from <a href="https://www.python.org/downloads/" target="_blank" style="color:var(--accent);">python.org</a> and check <em>"Add python.exe to PATH"</em> during installation.</li>
+            <li><strong>If Windows shows "Windows protected your PC":</strong> Click <em>"More info"</em> on the blue screen, then click <em>"Run anyway"</em>.</li>
+            <li><strong>Is Google Chrome required?</strong> Yes! Google Chrome must be installed on your laptop.</li>
+        </ul>
     </div>
 
     <div class="footer">
-        <p>Built by Vansh Lalwani &middot; <a href="https://github.com/Vansh9115/naukri-auto-applier-pro">View on GitHub</a></p>
+        <p>Built by Vansh Lalwani &middot; <a href="https://github.com/Vansh9115/naukri-auto-applier-pro" target="_blank">View Repository on GitHub</a></p>
     </div>
 </div>
 </body>
