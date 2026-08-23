@@ -1,0 +1,18 @@
+{
+  "naukri_email": "",
+  "naukri_password": "",
+  "keywords": ["Network engineer"],
+  "locations": ["Bangalore", "Gurugram", "Delhi NCR", "Noida", "Hyderabad", "Pune"],
+  "experience_years": 4,
+  "current_ctc_lpa": 4,
+  "expected_ctc_lpa": 6.5,
+  "notice_period_days": 15,
+  "notice_period_str": "15 Days or less",
+  "resume_path": "",
+  "willing_to_relocate": true,
+  "max_applications_per_run": 50,
+  "headless": true,
+  "delay_between_jobs_seconds": [3, 6],
+  "chrome_user_data_dir": "./naukri_chrome_profile",
+  "log_file": "applied_jobs.csv"
+}

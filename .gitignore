@@ -1,6 +1,10 @@
-# Persistent Browser User Profiles
+# Persistent Browser User Profiles (contain cookies/saved passwords - NEVER commit)
 naukri_user_data/
 naukri_user_data_session/
+naukri_chrome_profile/
+test_profile/
+chrome_profile*/
+*_profile/
 
 # Python Cache & Bytecode
 __pycache__/
@@ -10,9 +14,21 @@ __pycache__/
 # Logs & Temporary Reports
 *.log
 test_report.html
+application_report.html
 
 # User Personal Applied Database (keep template applied_jobs.csv.example)
 applied_jobs.csv
+*.db
+*.db-journal
+
+# Uploaded resumes / generated tailored resumes
+uploads/
+resume_versions/
+
+# Personal config & credentials (keep template config.example.json)
+config.json
+google_token.json
+client_secret.json
 
 # Environment & Credentials
 .env
