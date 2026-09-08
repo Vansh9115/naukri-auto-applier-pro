@@ -11,12 +11,25 @@ for _stream in (sys.stdout, sys.stderr):
         _stream.reconfigure(encoding="utf-8", errors="replace")
     except (AttributeError, ValueError):
         pass
+
+# When frozen into a standalone .exe (PyInstaller), bundled read-only files
+# (index.html, etc.) live under sys._MEIPASS, a temp dir that's wiped after
+# the process exits — never a place to write user data. Everything the app
+# writes (config.json, uploads/, applied_jobs.csv, the Chrome profile) must
+# live next to the .exe itself so it persists across runs. Both existing
+# relative-path code throughout this app and naukri_bot.py/tracker.py assume
+# the working directory is the app's home, so chdir there up front.
+FROZEN = getattr(sys, "frozen", False)
+BUNDLE_DIR = sys._MEIPASS if FROZEN else os.path.dirname(os.path.abspath(__file__))
+if FROZEN:
+    os.chdir(os.path.dirname(sys.executable))
+
 from flask import Flask, jsonify, request, send_file, render_template_string
 from werkzeug.utils import secure_filename
 from naukri_bot import NaukriBot, load_config
 from tracker import JobTracker
 
-app = Flask(__name__, static_folder=".")
+app = Flask(__name__, static_folder=BUNDLE_DIR)
 app.config["UPLOAD_FOLDER"] = os.path.abspath("./uploads")
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
@@ -42,7 +55,7 @@ def append_log(msg, level="INFO"):
 
 @app.route("/")
 def index():
-    with open("index.html", "r", encoding="utf-8") as f:
+    with open(os.path.join(BUNDLE_DIR, "index.html"), "r", encoding="utf-8") as f:
         return render_template_string(f.read())
 
 
@@ -183,5 +196,16 @@ if __name__ == "__main__":
     print("  🚀 Naukri Auto-Applier Pro")
     print("     http://localhost:5000")
     print("=" * 55)
+
+    # Check for a newer build before doing anything else — this only does
+    # anything in a packaged .exe (a no-op for `python web_app.py` dev
+    # runs), and only at startup, so it never interrupts an active session.
+    # If an update is applied, this process exits here and a detached
+    # helper relaunches the new .exe.
+    from updater import check_and_apply_update
+    print("  Checking for updates...")
+    if check_and_apply_update(BUNDLE_DIR, log=print):
+        sys.exit(0)
+
     threading.Timer(1.5, open_browser).start()
     app.run(host="0.0.0.0", port=5000, debug=False)

@@ -1,0 +1,42 @@
+name: Build and Release Windows EXE
+
+# Every push to main gets its own build number (the GitHub Actions run
+# number), packaged as a GitHub Release. Every running .exe checks that
+# release on startup (see updater.py) and self-updates if it's behind.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Write build version
+        shell: bash
+        run: echo "${{ github.run_number }}" > version.txt
+
+      - name: Build exe
+        run: pyinstaller NaukriAutoApplierPro.spec
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Build ${{ github.run_number }}
+          body: Automated build from ${{ github.sha }}.
+          files: dist/NaukriAutoApplierPro.exe

@@ -32,3 +32,7 @@ client_secret.json
 
 # Environment & Credentials
 .env
+
+# PyInstaller build output (regenerate with: pyinstaller NaukriAutoApplierPro.spec)
+build/
+dist/

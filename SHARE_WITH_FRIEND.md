@@ -1,10 +1,34 @@
 # 🎁 How to Share Naukri Auto-Applier Pro with a Non-Technical Friend
 
-If your friend is non-technical and cannot install complex tools on their laptop, here are the **2 easiest ways** to give them this application:
+If your friend is non-technical and cannot install complex tools on their laptop, here are the easiest ways to give them this application.
 
 ---
 
-## ⚡ Option 1: Send them a ZIP file (Simplest & Most Portable)
+## 🏆 Option 0: The standalone .exe (No Python, no pip installs — just Chrome)
+
+This is the version to send a friend on a laptop where you don't want them installing anything except Chrome, which almost everyone already has.
+
+### Step 1: Build it (on your machine, once)
+```bash
+pip install pyinstaller
+pyinstaller NaukriAutoApplierPro.spec
+```
+This produces `dist/NaukriAutoApplierPro.exe` — a single file with Python, Flask, Playwright, pandas, etc. all bundled inside. It's large (~50MB) because of that, which is expected.
+
+### Step 2: Send them just the .exe
+Zip and send `dist/NaukriAutoApplierPro.exe` on its own — nothing else from the repo is needed.
+
+### Step 3: What your friend needs
+1. **The only mandatory install: Google Chrome.** The bot drives your friend's real installed Chrome (not a hidden bot browser) so Google sign-in works normally. If they don't have it: [google.com/chrome](https://www.google.com/chrome/).
+2. Put `NaukriAutoApplierPro.exe` in its own folder (it creates `config.json`, `uploads/`, `naukri_chrome_profile/`, and `applied_jobs.csv` next to itself the first time it runs).
+3. Double-click it. A console window opens, then their browser opens to `http://localhost:5000` automatically.
+4. Fill in the form (keywords, CTC, resume, etc.) and click **Login with Google**, then **Start Applying**.
+
+No Python, no `pip install`, no `playwright install` — all of that is baked into the .exe.
+
+---
+
+## ⚡ Option 1: Send them a ZIP file (Python required)
 
 ### Step 1: Download the ZIP from GitHub
 1. Go to your GitHub repository:
