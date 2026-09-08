@@ -95,6 +95,10 @@ class NaukriBot:
         self.session_external = 0
         self.stop_requested = False
         self.log_callback = log_callback
+        # Tracks (title, company) pairs already applied to *this run*, across
+        # pages and keywords — Naukri sometimes lists the same posting twice
+        # under different job ids/hrefs, which id-based dedupe alone misses.
+        self.applied_title_company = set()
         self.user_data_dir = os.path.abspath(self.config.get("chrome_user_data_dir", "./naukri_chrome_profile"))
         Path(self.user_data_dir).mkdir(parents=True, exist_ok=True)
 
@@ -338,6 +342,7 @@ class NaukriBot:
             self.log(f"Found {len(cards)} job cards on page {pg_num}.")
 
             jobs = []
+            seen_ids = set()
             for card in cards:
                 try:
                     a = card.query_selector("a.title, a.title.ellipsis")
@@ -345,14 +350,36 @@ class NaukriBot:
                         continue
                     href = a.get_attribute("href")
                     title = a.text_content().strip()
-                    ce = card.query_selector("a.subTitle, span.comp-name")
+                    ce = card.query_selector(
+                        "a.subTitle, span.comp-name, a.comp-name, .comp-dtls-wrap a, .companyName"
+                    )
                     company = ce.text_content().strip() if ce else "Unknown"
                     jid = card.get_attribute("data-job-id") or href
-                    
+
+                    # The card selector list above ("wrapper, article, tuple")
+                    # can match nested elements for the same posting (e.g. a
+                    # wrapper div containing the article), so the same job
+                    # shows up twice in `cards`. Dedupe on id/href here.
+                    if jid in seen_ids:
+                        continue
+                    seen_ids.add(jid)
+
                     badge = card.query_selector(".already-applied, span:has-text('Applied')")
                     if badge or self.tracker.is_applied(jid, href, title, company):
                         self.session_skipped += 1
                         continue
+
+                    # Naukri sometimes lists the identical posting twice under
+                    # different job ids/hrefs (id-based dedupe above misses
+                    # this) — so also dedupe on the displayed title+company
+                    # for the whole run, to avoid applying twice to what
+                    # looks like the same job to a real employer.
+                    tc_key = (title.lower().strip(), company.lower().strip())
+                    if tc_key in self.applied_title_company:
+                        self.session_skipped += 1
+                        continue
+                    self.applied_title_company.add(tc_key)
+
                     jobs.append({"id": jid, "title": title, "company": company, "url": href})
                 except Exception:
                     continue
@@ -401,7 +428,7 @@ class NaukriBot:
 
             self.log("  Clicking Apply...")
             btn.click()
-            self.random_sleep(2, 4)
+            self.random_sleep(1, 2)
 
             if "naukri.com" not in pg.url.lower():
                 self.log("  ⏭ External portal redirect detected. Skipping.", "INFO")
@@ -433,7 +460,7 @@ class NaukriBot:
         """Solves chatbot prompts & questionnaire forms iteratively."""
         resume = self.config.get("resume_path", "")
         for step in range(1, 16):
-            self.random_sleep(1.5, 2.5)
+            self.random_sleep(0.5, 1)
 
             # Check for application success
             for sel in [".applied-msg", ".success-title", ".congrats",
@@ -483,12 +510,39 @@ class NaukriBot:
                         "div[class*='drawer']", "div[class*='Drawer']", "div[role='dialog']"]:
                 c = page.query_selector(cs)
                 if c and c.is_visible():
-                    qtext = c.text_content() or ""
-                    break
+                    qtext = (c.text_content() or "").strip()
+                    if qtext:
+                        break
         except Exception:
             pass
 
-        self.log(f"    💬 Chatbot Question: '{qtext[:60].strip()}...'")
+        if not qtext:
+            # Fallback: none of the known container classes matched (Naukri
+            # changes these often) — walk up from the input itself and grab
+            # the first visible ancestor with real text, so we're not
+            # answering blind.
+            try:
+                qtext = (inp.evaluate(
+                    """el => {
+                        let node = el;
+                        for (let i = 0; i < 6 && node; i++) {
+                            node = node.parentElement;
+                            if (!node) break;
+                            const txt = (node.innerText || '').trim();
+                            if (txt.length > 10) return txt;
+                        }
+                        return '';
+                    }"""
+                ) or "").strip()
+            except Exception:
+                pass
+
+        preview = qtext[:60].strip()
+        if not preview:
+            preview = "(question text not captured)"
+        elif len(qtext) > 60:
+            preview += "..."
+        self.log(f"    💬 Chatbot Question: '{preview}'")
         answer = self.engine.answer(qtext)
         self.log(f"    ✏️ Auto-filled Answer: '{answer}'")
 
@@ -587,7 +641,7 @@ class NaukriBot:
                 b = overlay.query_selector(bs)
                 if b and b.is_visible():
                     b.click()
-                    self.random_sleep(1.5, 2.5)
+                    self.random_sleep(0.5, 1)
                     return True
             except Exception:
                 pass

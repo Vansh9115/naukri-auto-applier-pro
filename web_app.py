@@ -3,6 +3,14 @@ import sys
 import json
 import threading
 import webbrowser
+
+# Windows consoles often default to cp1252, which can't encode the emoji
+# used in log/status output below; force UTF-8 so startup doesn't crash.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
 from flask import Flask, jsonify, request, send_file, render_template_string
 from werkzeug.utils import secure_filename
 from naukri_bot import NaukriBot, load_config
@@ -15,12 +23,19 @@ os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 bot_instance = None
 bot_thread = None
 login_thread = None
+start_lock = threading.Lock()
 log_buffer = []
 
 
 def append_log(msg, level="INFO"):
     icons = {"INFO": "ℹ️", "SUCCESS": "✅", "WARNING": "⚠️", "ERROR": "❌"}
-    log_buffer.append(f"{icons.get(level, 'ℹ️')} {msg}")
+    # Many messages from naukri_bot.py already carry their own leading emoji
+    # (e.g. "🚀 Starting..."); only add the level icon when they don't, to
+    # avoid doubled-up icons like "✅ ✅ Login confirmed!".
+    stripped = msg.lstrip()
+    already_has_icon = bool(stripped) and ord(stripped[0]) > 0x2100
+    prefix = "" if already_has_icon else f"{icons.get(level, 'ℹ️')} "
+    log_buffer.append(f"{prefix}{msg}")
     if len(log_buffer) > 200:
         log_buffer.pop(0)
 
@@ -64,22 +79,27 @@ def upload_resume():
 @app.route("/api/start", methods=["POST"])
 def start_bot():
     global bot_instance, bot_thread, log_buffer
-    if bot_thread and bot_thread.is_alive():
-        return jsonify({"status": "already_running", "message": "Bot session is already running."})
-    
-    cfg = load_config()
-    log_buffer = ["🚀 New session started — resetting counters."]
-    bot_instance = NaukriBot(cfg, log_callback=append_log)
+    # Guard the check-then-start sequence with a lock: two near-simultaneous
+    # requests (e.g. a double-click) could otherwise both pass the
+    # is_alive() check before either thread actually starts, launching two
+    # Chrome instances against the same profile dir at once.
+    with start_lock:
+        if bot_thread and bot_thread.is_alive():
+            return jsonify({"status": "already_running", "message": "Bot session is already running."})
 
-    def worker():
-        try:
-            bot_instance.start()
-        except Exception as e:
-            append_log(f"Session Error: {e}", "ERROR")
+        cfg = load_config()
+        log_buffer = ["🚀 New session started — resetting counters."]
+        bot_instance = NaukriBot(cfg, log_callback=append_log)
 
-    bot_thread = threading.Thread(target=worker, daemon=True)
-    bot_thread.start()
-    append_log("🚀 Application session initiated!", "SUCCESS")
+        def worker():
+            try:
+                bot_instance.start()
+            except Exception as e:
+                append_log(f"Session Error: {e}", "ERROR")
+
+        bot_thread = threading.Thread(target=worker, daemon=True)
+        bot_thread.start()
+        append_log("🚀 Application session initiated!", "SUCCESS")
     return jsonify({"status": "started", "message": "Session started."})
 
 
