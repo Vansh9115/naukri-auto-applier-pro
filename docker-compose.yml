@@ -1,0 +1,22 @@
+services:
+  naukri-auto-applier:
+    # Both `build` and `image` set on purpose: `docker compose up --build`
+    # builds from local source and tags it as this name (for testing your
+    # own changes); `docker compose pull` instead fetches the pre-built,
+    # auto-published image from GitHub Container Registry (see
+    # .github/workflows/docker-build.yml and DOCKER.md) — the path
+    # everyone else (a friend who just wants to run it) should use.
+    build: .
+    image: ghcr.io/vansh9115/naukri-auto-applier-pro:latest
+    ports:
+      - "5000:5000"   # Dashboard
+      - "6080:6080"   # noVNC — open this in a browser tab to see/click the actual Chrome window (Google login, CAPTCHAs, etc.)
+    volumes:
+      # Everything the app writes, kept outside the container so it
+      # survives `docker compose down` / rebuilds — mirrors what the
+      # standalone .exe keeps next to itself.
+      - ./docker-data/config.json:/app/config.json
+      - ./docker-data/applied_jobs.csv:/app/applied_jobs.csv
+      - ./docker-data/uploads:/app/uploads
+      - ./docker-data/naukri_chrome_profile:/app/naukri_chrome_profile
+    restart: unless-stopped

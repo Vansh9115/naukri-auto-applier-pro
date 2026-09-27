@@ -40,7 +40,11 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    # UPX-compressed executables are a well-known antivirus/SmartScreen
+    # false-positive trigger (the same compression trick a lot of real
+    # malware uses to evade signature scanning) — off, at the cost of a
+    # larger file, buys real reduction in false flags on a fresh machine.
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=True,

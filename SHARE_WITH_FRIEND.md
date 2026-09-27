@@ -26,6 +26,18 @@ Zip and send `dist/NaukriAutoApplierPro.exe` on its own — nothing else from th
 
 No Python, no `pip install`, no `playwright install` — all of that is baked into the .exe.
 
+### ⚠️ "Windows protected your PC" / antivirus deletes the file
+
+This is expected, not a sign anything is broken — any unsigned, freshly-built `.exe` from an individual developer gets this because Windows/antivirus vendors have no track record for it yet, not because of anything it actually does. It's the single most common reason a friend reports the app "doesn't work."
+
+**What your friend needs to do, once:**
+1. If Windows shows **"Windows protected your PC"** → click **More info** → **Run anyway**.
+2. If their antivirus quarantined/deleted it → restore it from quarantine and add a one-time exclusion for that file.
+
+**What reduces (not eliminates) this on your end:**
+- The build already disables UPX compression — UPX is a common malware-obfuscation trick, and turning it off measurably cuts false-positive flags (done in `NaukriAutoApplierPro.spec`).
+- The only real fix that removes the warning entirely is **code signing** a Windows executable, which needs a paid Authenticode certificate (~$100-400+/yr from a CA like Sectigo/DigiCert) — *unless* your project qualifies for [SignPath.io](https://signpath.io)'s free signing for open-source projects, which is worth applying for since this repo is public, but involves an application/vetting process, not something done in a few minutes.
+
 ---
 
 ## ⚡ Option 1: Send them a ZIP file (Python required)

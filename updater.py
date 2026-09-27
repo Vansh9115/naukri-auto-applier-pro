@@ -48,26 +48,32 @@ def _parse_version(tag_name):
 
 def _spawn_swap_and_relaunch(pid, exe_path, new_path):
     """Write and launch a detached helper that waits for `pid` to exit,
-    then replaces exe_path with new_path and starts it again."""
-    helper_path = exe_path + ".updater.bat"
-    script = f"""@echo off
-:wait
-tasklist /fi "PID eq {pid}" | find "{pid}" >nul
-if not errorlevel 1 (
-    timeout /t 1 /nobreak >nul
-    goto wait
-)
-timeout /t 1 /nobreak >nul
-del /f /q "{exe_path}"
-move /y "{new_path}" "{exe_path}"
-start "" "{exe_path}"
-del /f /q "%~f0"
+    then replaces exe_path with new_path and starts it again.
+
+    A PowerShell script rather than a classic .bat: an earlier version
+    used `tasklist | find` in a wait loop, which reliably failed with
+    "Input redirection is not supported" when launched this way from
+    inside a frozen PyInstaller exe specifically (not from a plain `python`
+    process — verified both ways). Wait-Process/Start-Process are real
+    cmdlets built for exactly this, not text-parsing another console
+    tool's output, and don't have that failure mode.
+    """
+    helper_path = exe_path + ".updater.ps1"
+    script = f"""Wait-Process -Id {pid} -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 1
+Remove-Item -LiteralPath '{exe_path}' -Force
+Move-Item -LiteralPath '{new_path}' -Destination '{exe_path}' -Force
+Start-Process -FilePath '{exe_path}'
+Remove-Item -LiteralPath $MyInvocation.MyCommand.Path -Force
 """
     with open(helper_path, "w", encoding="utf-8") as f:
         f.write(script)
     subprocess.Popen(
-        ["cmd", "/c", helper_path],
-        creationflags=subprocess.CREATE_NO_WINDOW | subprocess.DETACHED_PROCESS,
+        [
+            "powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden",
+            "-ExecutionPolicy", "Bypass", "-File", helper_path,
+        ],
+        creationflags=subprocess.CREATE_NO_WINDOW,
         close_fds=True,
     )
 

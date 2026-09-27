@@ -188,7 +188,12 @@ def get_report():
 
 
 def open_browser():
-    webbrowser.open("http://localhost:5000")
+    # No-ops harmlessly in environments with no local browser to open (e.g.
+    # inside the Docker image) instead of raising in this timer thread.
+    try:
+        webbrowser.open("http://localhost:5000")
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":
